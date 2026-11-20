@@ -1,0 +1,51 @@
+clt:
+	on_connect:
+		placed in first world with enough space
+	
+	change_world:
+		16bit: world
+	
+	get_world:
+		16bit world
+
+
+response == server -> client
+request == client -> server
+
+protocole:
+	OPCODE: 32bit
+	len: 16bit
+	...(args)
+
+
+OPC_ERR:
+	error: 32bit
+
+OPC_CHANGE_WORLD: (request) !TODO
+	world: 16bit
+
+OPC_CHANGE_WORLD: (response)
+	blocks: 32bit[WORLD_HEIGHT][WORLD_WIDTH]
+	entities: entity_t[]
+
+OPC_MOVE: (request)
+	direction: 8bit (0bABCD -> A: is_up, B: is_down, C: is_left, D: is_right)
+
+OPC_MOVE: (request)
+	entity_idx: 16bit
+	new_x: 32bit
+	new_y: 32bit
+
+
+
+
+entity_t:
+	x: 32bit
+	y: 32bit
+	type: 32bit
+	data: 32bit
+	if type >> 31:
+		then player
+		type & 0xFFFFFF == color
+	
+	

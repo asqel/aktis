@@ -1,0 +1,22 @@
+#include "server.h"
+
+void clean_srv() {
+	for (size_t i = 0; i < WORLD_MAX; i++) {
+		world_t *world = &srv.worlds[i];
+		free(world->entities);
+		world->entities = NULL;
+		world->entities_len = 0;
+		world->entities_alloc = 0;
+	}
+
+	for (size_t i = 0; i < srv.sock.clients_len; i++) {
+		oeso_srv_clt_t *clt = &srv.sock.clients[i];
+		client_t *client = clt->data;
+		buffer_free(&client->recv);
+		buffer_free(&client->send);
+
+		free(clt->data);
+		clt->data = NULL;
+	}
+	oeso_server_exit(&srv.sock);
+}
