@@ -1,6 +1,6 @@
 #include "server.h"
 
-int srv_on_connect(oeso_srv_clt_t *clt, oeso_srv_ctx_t *srv) {
+int srv_on_connect(ra_srv_clt_t *clt, ra_srv_ctx_t *srv) {
 	printf("SHSHSHS\n");
 	(void)srv;
 	client_t *client = malloc(sizeof(client_t));
@@ -73,7 +73,7 @@ int srv_on_connect(oeso_srv_clt_t *clt, oeso_srv_ctx_t *srv) {
 	return 0;
 }
 
-void srv_on_recv(oeso_srv_clt_t *clt, oeso_srv_ctx_t *srv, void *data, size_t data_len) {
+void srv_on_recv(ra_srv_clt_t *clt, ra_srv_ctx_t *srv, void *data, size_t data_len) {
 	(void)srv;
 	
 	client_t *client = clt->data;
@@ -82,21 +82,21 @@ void srv_on_recv(oeso_srv_clt_t *clt, oeso_srv_ctx_t *srv, void *data, size_t da
 	if (buffer_append(&client->recv, data, data_len)) {
 		remove_client(client);
 		clt->data = NULL;
-		oeso_server_remove(srv, clt);
+		ra_server_remove(srv, clt);
 		return ;
 	}
 }
 
-void srv_on_send_ready(oeso_srv_clt_t *clt, oeso_srv_ctx_t *srv_ctx) {
+void srv_on_send_ready(ra_srv_clt_t *clt, ra_srv_ctx_t *srv_ctx) {
 	client_t *client = clt->data;
 	if (!client)
 		return ;
 	
-	ssize_t ret = oeso_server_send(srv_ctx, clt, client->send.data, client->send.len);
+	ssize_t ret = ra_server_send(srv_ctx, clt, client->send.data, client->send.len);
 	if (ret < 0) {
 		remove_client(client);
 		clt->data = NULL;
-		oeso_server_remove(srv_ctx, clt);
+		ra_server_remove(srv_ctx, clt);
 		return ;
 	}
 	if (ret == 0)
@@ -109,7 +109,7 @@ void srv_on_send_ready(oeso_srv_clt_t *clt, oeso_srv_ctx_t *srv_ctx) {
 	}
 }
 
-void srv_on_disconnect(oeso_srv_clt_t *clt, oeso_srv_ctx_t *srv, int is_error) {
+void srv_on_disconnect(ra_srv_clt_t *clt, ra_srv_ctx_t *srv, int is_error) {
 	(void)is_error;	
 	(void)srv;
 	if (clt->data == NULL)

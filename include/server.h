@@ -3,12 +3,12 @@
 
 #include <stdio.h>
 #include "common.h"
-#include "oeuf_socket.h"
+#include "raisin.h"
 
 #define WORLD_MAX 256
 
 typedef struct {
-	oeso_srv_ctx_t sock;
+	ra_srv_ctx_t sock;
 	world_t worlds[WORLD_MAX];
 	size_t need_send_count;
 } server_t;
@@ -29,10 +29,10 @@ extern server_t srv;
 void loop_srv();
 world_t *find_world();
 
-int srv_on_connect(oeso_srv_clt_t *clt, oeso_srv_ctx_t *srv);
-void srv_on_recv(oeso_srv_clt_t *clt, oeso_srv_ctx_t *srv, void *data, size_t data_len);
-void srv_on_send_ready(oeso_srv_clt_t *clt, oeso_srv_ctx_t *srv);
-void srv_on_disconnect(oeso_srv_clt_t *clt, oeso_srv_ctx_t *srv, int is_error);
+int srv_on_connect(ra_srv_clt_t *clt, ra_srv_ctx_t *srv);
+void srv_on_recv(ra_srv_clt_t *clt, ra_srv_ctx_t *srv, void *data, size_t data_len);
+void srv_on_send_ready(ra_srv_clt_t *clt, ra_srv_ctx_t *srv);
+void srv_on_disconnect(ra_srv_clt_t *clt, ra_srv_ctx_t *srv, int is_error);
 
 void remove_client(client_t *client);
 void srv_broadcast_new_player(uint16_t world_id);

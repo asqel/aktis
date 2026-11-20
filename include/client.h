@@ -2,7 +2,7 @@
 #define CLIENT_H
 
 #include "common.h"
-#include "oeuf_socket.h"
+#include "raisin.h"
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
 #include <stdio.h>
@@ -13,7 +13,7 @@
 #endif
 
 typedef struct {
-	oeso_clt_ctx_t sock;
+	ra_clt_ctx_t sock;
 	world_t world;
 	int state;
 	int has_sock;
@@ -115,10 +115,10 @@ void render_update();
 
 void render_compute();
 
-void clt_on_connect(oeso_clt_ctx_t *ctx, int success);
-void clt_on_disconnect(oeso_clt_ctx_t *ctx, int is_error);
-void clt_on_recv(oeso_clt_ctx_t *ctx, void *data, size_t data_len);
-void clt_on_send_ready(oeso_clt_ctx_t *ctx);
+void clt_on_connect(ra_clt_ctx_t *ctx, int success);
+void clt_on_disconnect(ra_clt_ctx_t *ctx, int is_error);
+void clt_on_recv(ra_clt_ctx_t *ctx, void *data, size_t data_len);
+void clt_on_send_ready(ra_clt_ctx_t *ctx);
 
 int init_font();
 void exit_font();

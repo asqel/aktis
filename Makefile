@@ -1,5 +1,5 @@
 HEADER_COMMON = include/common.h
-CFLAGS_COMMON = -Wall -Wextra -g -Iinclude -Ioeuf-socket/
+CFLAGS_COMMON = -Wall -Wextra -g -Iinclude -Iraisin/
 
 SRC_CLIENT = $(wildcard src/common/*.c src/common/*/*.c src/clt/*.c src/clt/*/*.c)
 OBJ_CLIENT = $(SRC_CLIENT:.c=.o)
@@ -15,11 +15,11 @@ HEADER_SERVER := include/server.h $(HEADER_COMMON)
 
 CFLAGS_CLIENT = $(CFLAGS_COMMON) -DSDL_MAIN_HANDLED=1 -mavx2 -msse2 -O3
 LDFLAGS_CLIENT = -lSDL3 -lSDL3_image -lm
-LIBS_SO_CLIENT = ./liboeso.so
+LIBS_SO_CLIENT = ./libra.so
 
 CFLAGS_SERVER = $(CFLAGS_COMMON)
 LDFLAGS_SERVER =
-LIBS_SO_SERVER = ./liboeso.so
+LIBS_SO_SERVER = ./libra.so
 
 
 CC = gcc
@@ -51,9 +51,9 @@ obj/common/%.o: src/common/%.c $(HEADER_COMMON)
 	@mkdir -p $(dir $@)
 	@$(CC) -c $< -o $@ $(CFLAGS_COMMON)
 
-./liboeso.so:
-	make -C oeuf-socket/
-	cp oeuf-socket/liboeso.so ./
+./libra.so:
+	make -C raisin/
+	cp raisin/libra.so ./
 
 clean:
 	rm -rf $(OBJ_CLIENT)

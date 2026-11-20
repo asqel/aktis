@@ -152,7 +152,7 @@ void tick_shoot(client_t *client) {
 }
 
 void srv_tick_client(size_t client_idx) {
-	oeso_srv_clt_t *clt = &srv.sock.clients[client_idx];
+	ra_srv_clt_t *clt = &srv.sock.clients[client_idx];
 	client_t *client = clt->data;
 	if (!client)
 		return ;

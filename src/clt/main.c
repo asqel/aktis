@@ -1,22 +1,22 @@
 #include <stdio.h>
 #include <SDL3/SDL.h>
 #include <common.h>
-#include "oeuf_socket.h"
+#include "raisin.h"
 #include "client.h"
 
 #define FPS_MS (1000 / 60)
 
 int main() {
-	if (oeso_init())
+	if (ra_init())
 		return 1;
 	if (render_init()) {
-		oeso_exit();
+		ra_exit();
 		return 1;
 	}
 
 	if (init_font()) {
 		render_exit();
-		oeso_exit();
+		ra_exit();
 		return 1;
 	}
 	render.y = 2;

@@ -1,10 +1,10 @@
 #include "client.h"
 
-void clt_on_connect(oeso_clt_ctx_t *ctx, int success) {
+void clt_on_connect(ra_clt_ctx_t *ctx, int success) {
 	(void)ctx;
 	if (!success) {
 		client_fail("PAS REUSSI A SE CO");
-		oeso_client_exit(&clt.sock);
+		ra_client_exit(&clt.sock);
 		clt.has_sock = 0;
 	}
 	else {
@@ -20,15 +20,15 @@ void clt_on_connect(oeso_clt_ctx_t *ctx, int success) {
 	}
 }
 
-void clt_on_disconnect(oeso_clt_ctx_t *ctx, int is_error) {
+void clt_on_disconnect(ra_clt_ctx_t *ctx, int is_error) {
 	(void)ctx;
 	(void)is_error;
 	client_fail("LE SERVER EST DECEDE");
-	oeso_client_exit(&clt.sock);
+	ra_client_exit(&clt.sock);
 	clt.has_sock = 0;
 }
 
-void clt_on_recv(oeso_clt_ctx_t *ctx, void *data, size_t data_len) {
+void clt_on_recv(ra_clt_ctx_t *ctx, void *data, size_t data_len) {
 	(void)ctx;
 	// !TODO check return alloc
 	buffer_append(&clt.recv, data, data_len);
@@ -49,10 +49,10 @@ void clt_on_recv(oeso_clt_ctx_t *ctx, void *data, size_t data_len) {
 	}
 }
 
-void clt_on_send_ready(oeso_clt_ctx_t *ctx) {
-	ssize_t ret = oeso_client_send(ctx, clt.send.data, clt.send.len);
+void clt_on_send_ready(ra_clt_ctx_t *ctx) {
+	ssize_t ret = ra_client_send(ctx, clt.send.data, clt.send.len);
 	if (ret < 0) {
-		oeso_client_exit(ctx);
+		ra_client_exit(ctx);
 		clt.has_sock = 0;
 		client_fail("LE SERVER!!!");
 	}

@@ -10,7 +10,7 @@ void clean_srv() {
 	}
 
 	for (size_t i = 0; i < srv.sock.clients_len; i++) {
-		oeso_srv_clt_t *clt = &srv.sock.clients[i];
+		ra_srv_clt_t *clt = &srv.sock.clients[i];
 		client_t *client = clt->data;
 		buffer_free(&client->recv);
 		buffer_free(&client->send);
@@ -18,5 +18,5 @@ void clean_srv() {
 		free(clt->data);
 		clt->data = NULL;
 	}
-	oeso_server_exit(&srv.sock);
+	ra_server_exit(&srv.sock);
 }

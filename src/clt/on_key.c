@@ -13,7 +13,7 @@ void on_key_start(SDL_Event *ev) {
 		clt.sock.on_recv = clt_on_recv;
 		clt.sock.on_send_ready = clt_on_send_ready;
 		clt.has_sock = 1;
-		if (oeso_client_init(&clt.sock, "asqel.ddns.net", 42124, OESO_FLAG_NODELAY)) {
+		if (ra_client_init(&clt.sock, "asqel.ddns.net", 42124, RA_FLAG_NODELAY)) {
 			client_fail("pas trouve le server");
 			clt.has_sock = 0;
 		}

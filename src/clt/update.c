@@ -14,7 +14,7 @@ void client_update() {
 	if (clt.has_sock) {
 		if (clt.send.len)
 			clt.sock.need_send = 1;
-		oeso_client_wait(&clt.sock, 10);
+		ra_client_wait(&clt.sock, 10);
 	}
 	switch (clt.state) {
 		case CLT_START:

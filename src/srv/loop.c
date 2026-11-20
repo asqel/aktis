@@ -28,11 +28,11 @@ void loop_srv() {
 	srv.sock.on_disconnect = srv_on_disconnect;
 	while (!will_end) {
 		srv.need_send_count = 0;
-		oeso_server_wait(&srv.sock, srv_get_timeout());
+		ra_server_wait(&srv.sock, srv_get_timeout());
 		srv.sock.need_send = 0;
 
 		for (size_t i = 0; i < srv.sock.clients_len; i++) {
-			oeso_srv_clt_t *oe_client = &srv.sock.clients[i];
+			ra_srv_clt_t *oe_client = &srv.sock.clients[i];
 			client_t *client = oe_client->data;
 			if (!client)
 				continue;

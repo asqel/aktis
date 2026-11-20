@@ -54,7 +54,7 @@ void srv_broadcast_new_player(uint16_t world_id) {
 	entity_t *ent = &world->entities[world->entities_len - 1];
 	
 	for (size_t i = 0; i < srv.sock.clients_len; i++) {
-		oeso_srv_clt_t *clt = &srv.sock.clients[i];
+		ra_srv_clt_t *clt = &srv.sock.clients[i];
 		client_t *client = clt->data;
 		if (!client)
 			continue;
@@ -68,7 +68,7 @@ void srv_broadcast_new_player(uint16_t world_id) {
 
 void srv_broadcast_move(world_t *world, entity_t *ent, uint16_t entity_idx) {
 	for (size_t i = 0; i < srv.sock.clients_len; i++) {
-		oeso_srv_clt_t *clt = &srv.sock.clients[i];
+		ra_srv_clt_t *clt = &srv.sock.clients[i];
 		client_t *client = clt->data;
 		if (!client)
 			continue;
@@ -82,7 +82,7 @@ void srv_broadcast_move(world_t *world, entity_t *ent, uint16_t entity_idx) {
 
 void srv_broadcast_entity_data(entity_t *ent, world_t *world, uint32_t ent_idx) {
 	for (size_t i = 0; i < srv.sock.clients_len; i++) {
-		oeso_srv_clt_t *clt = &srv.sock.clients[i];
+		ra_srv_clt_t *clt = &srv.sock.clients[i];
 		client_t *client = clt->data;
 		if (!client)
 			continue;
@@ -96,7 +96,7 @@ void srv_broadcast_entity_data(entity_t *ent, world_t *world, uint32_t ent_idx) 
 
 void srv_broadcast_remove_ent(world_t *world, uint16_t idx) {
 	for (size_t i = 0; i < srv.sock.clients_len; i++) {
-		oeso_srv_clt_t *clt = &srv.sock.clients[i];
+		ra_srv_clt_t *clt = &srv.sock.clients[i];
 		client_t *client = clt->data;
 		if (!client)
 			continue;
