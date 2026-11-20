@@ -59,3 +59,4 @@ SDL/
 .vscode/
 build/
 obj/
+game
