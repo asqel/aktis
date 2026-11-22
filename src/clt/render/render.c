@@ -31,15 +31,23 @@ void render_exit() {
 	exit_sdl();
 }
 
+int init_barrier(mutex_barrier_t *barrier);
+
 int render_init() {
 	if (init_sdl())
 		return 1;
+	if (init_barrier(&render.start_barrier))
+		return 1;
+	if (init_barrier(&render.end_barrier))
+		return 1;
+	render.kill_thread_mutex = SDL_CreateMutex();
+	
 	render.fov = 80;
 	render.res_mult = 30;
 	render.render_distance = 125;
 	if (render_set_res_base(16, 9))
 		return 1;
-
+	render_set_threads(12);
 	return 0;
 }
 
@@ -90,13 +98,33 @@ void render_update() {
 	SDL_RenderPresent(render.renderer);
 }
 
-void wait_barriere(mutex_barrier_t *barrier) {
+int init_barrier(mutex_barrier_t *barrier) {
+	barrier->mutex = SDL_CreateMutex();
+	if (!barrier->mutex)
+		return 1;
+	
+	barrier->cond = SDL_CreateCondition();
+	if (!barrier->cond) {
+		SDL_DestroyMutex(barrier->mutex);
+		return 1;
+	}
+	return 0;
+}
+
+void destroy_barrier(mutex_barrier_t *barrier) {
+	SDL_DestroyMutex(barrier->mutex);
+	SDL_DestroyCondition(barrier->cond);
+	barrier->mutex = NULL;
+	barrier->cond = NULL;
+}
+
+void wait_barrier(mutex_barrier_t *barrier, int force) {
 
 	SDL_LockMutex(barrier->mutex);
 	int old_generation = barrier->generation;
 	barrier->waiting_count++;
 
-	if (barrier->waiting_count == barrier->waiting_max) {
+	if (barrier->waiting_count == barrier->waiting_max || force) {
 		barrier->waiting_count = 0;
 		barrier->generation++;
 
@@ -110,30 +138,31 @@ void wait_barriere(mutex_barrier_t *barrier) {
 	SDL_UnlockMutex(barrier->mutex);
 }
 
-void *render_slave(void *data) {
+int render_slave(void *data) {
 	size_t id = (size_t)data;
 
 	while (1) {
-		wait_barriere(&render.start_barrier);
+		wait_barrier(&render.start_barrier, 0);
 
 		SDL_LockMutex(render.kill_thread_mutex);
 		if (render.kill_thread) {
 			SDL_UnlockMutex(render.kill_thread_mutex);
 			break;
 		}
+		SDL_UnlockMutex(render.kill_thread_mutex);
 
 		size_t rows = render.height / (render.threads_len + 1);
-		size_t y = rows * id;
-		size_t y_end = y + rows;
+		size_t y = rows * (id + 1);
+		size_t y_end = rows * (id + 2);
 		
 		if (id == render.threads_len - 1)
 			y_end = render.height;
 
 		raycast_draw(y, y_end);
 
-		wait_barriere(&render.end_barrier);
+		wait_barrier(&render.end_barrier, 0);
 	}
-	return NULL;
+	return 0;
 }
 
 void render_compute() {
@@ -143,17 +172,59 @@ void render_compute() {
 	if (render.threads_len == 0) {
 		raycast_draw(0, render.height);
 		SDL_UnlockTexture(render.texture);
+		SDL_RenderTexture(render.renderer, render.texture, NULL, NULL);
 		return ;
 	}
 
-	wait_barriere(&render.start_barrier);
+	wait_barrier(&render.start_barrier, 0);
 	raycast_draw(0, render.height / (render.threads_len + 1));
-	wait_barriere(&render.end_barrier);
+	wait_barrier(&render.end_barrier, 0);
 
 	SDL_UnlockTexture(render.texture);
+	SDL_RenderTexture(render.renderer, render.texture, NULL, NULL);
 }
 
 int render_set_threads(size_t number) {
-	// if something goes bad abort i tink
-	return number;
+	if (render.threads_len) {
+		SDL_LockMutex(render.kill_thread_mutex);
+		render.kill_thread = 1;
+		SDL_UnlockMutex(render.kill_thread_mutex);
+
+		wait_barrier(&render.start_barrier, 0);
+		for (size_t i = 0; i < render.threads_len; i++)
+			SDL_WaitThread(render.threads[i], NULL);
+		render.kill_thread = 0;
+		free(render.threads);
+		render.threads_len = 0;
+	}
+
+	render.threads = malloc(sizeof(SDL_Thread *) * number);
+	if (!render.threads)
+		return 1;
+	render.start_barrier.waiting_max = number + 1;
+	render.start_barrier.waiting_count = 0;
+	render.start_barrier.generation = 0;
+	render.end_barrier.waiting_max = number + 1;
+	render.end_barrier.waiting_count = 0;
+	render.end_barrier.generation = 0;
+	render.threads_len = number;
+
+	for (size_t i = 0; i < number; i++)
+		render.threads[i] = SDL_CreateThread(render_slave, "raycast-slave", (void *)i);
+	
+	return 0;
 }
+
+
+
+/*
+
+if (a || b) {
+
+
+	if (!a && b) {
+		
+	}
+}
+
+*/
