@@ -1,3 +1,16 @@
+
+
+chunk_t:
+	blocks: u32[16 * 16 * 16] // (y << 8) | (z << 4) | (x)
+
+world_t:
+	chunks: chunk_t *[width * width * height]
+		// index = y * width * width + z * width + x
+	width: u16
+	height: u16
+
+
+
 clt:
 	on_connect:
 		placed in first world with enough space
@@ -14,7 +27,7 @@ request == client -> server
 
 protocole:
 	OPCODE: 32bit
-	len: 16bit
+	len: 16bit (len of args in bytes)
 	...(args)
 
 

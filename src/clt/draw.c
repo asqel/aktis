@@ -28,7 +28,7 @@ void client_draw() {
 	switch (clt.state) {
 		case CLT_START:
 			render_compute();
-			printf("A\n");
+			//draw_text_centered("Chapter 6 is progressing well.", 50, 1, 0, 0xff, 0);
 			//draw_start();
 			break;
 		case CLT_LOADING:

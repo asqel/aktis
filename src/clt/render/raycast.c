@@ -4,13 +4,13 @@
 #define EPSILON (0.000001f)
 #define INF (1e30f)
 
-static inline int block_is_solid(int x, int y, int z) {
+static inline int block_is_solid(int x, int y, int z, world_t *world) {
 	if ((unsigned)x >= WORLD_SIZE || (unsigned)y >= WORLD_SIZE || (unsigned)z >= WORLD_SIZE)
 		return 0;
-	return clt.world.blocks[z][y][x] != 0;
+	return world->blocks[z][y][x] != 0;
 }
 
-static inline void cast_ray(ray_t *ray, int map_x, int map_y, int map_z) {
+static inline void cast_ray(ray_t *ray, int map_x, int map_y, int map_z, world_t *world) {
 	int step_x = (ray->dir_x > 0) ? (1) : (-1);
 	int step_y = (ray->dir_y > 0) ? (1) : (-1);
 	int step_z = (ray->dir_z > 0) ? (1) : (-1);
@@ -37,18 +37,31 @@ static inline void cast_ray(ray_t *ray, int map_x, int map_y, int map_z) {
 
 	size_t render_distance = render.render_distance;
 	while (1) {
-		if (block_is_solid(map_x, map_y, map_z)) {
+		if (block_is_solid(map_x, map_y, map_z, world)) {
 			if (side == 0) {
 			    ray->x_percent = render.z + ray->dir_z * dist - map_z;
 			    ray->y_percent = render.y + ray->dir_y * dist - map_y;
+				if (ray->dir_x < 0) {
+					ray->x_percent = 1 - ray->x_percent;
+				}
+				// hit  west east
 			}
 			else if (side == 1) {
 			    ray->x_percent = render.x + ray->dir_x * dist - map_x;
 			    ray->y_percent = render.z + ray->dir_z * dist - map_z;
+				if (ray->dir_y < 0) {
+					ray->x_percent = 1 - ray->x_percent;
+					ray->y_percent = 1 - ray->y_percent;
+				}
+				// hit up bot
 			}
 			else {
 			    ray->x_percent = render.x + ray->dir_x * dist - map_x;
 			    ray->y_percent = render.y + ray->dir_y * dist - map_y;
+				if (ray->dir_z > 0) {
+					ray->x_percent = 1 - ray->x_percent;
+				}
+				// hit north south
 			}
 			ray->has_hit = 1;
 			ray->x = map_x;
@@ -57,7 +70,7 @@ static inline void cast_ray(ray_t *ray, int map_x, int map_y, int map_z) {
 			ray->dist = dist;
 			return ;
 		}
-
+		
 		if (max_x < max_y && max_x < max_z) {
 			dist = max_x;
 			max_x += delta_x;
@@ -90,8 +103,8 @@ static inline void cast_ray(ray_t *ray, int map_x, int map_y, int map_z) {
 void raycast_draw(size_t y_start, size_t y_end) {
 	int pitch = render.framebuffer_pitch;
 
-	float rot_x = render.rot_x - M_PI / 2;
-	float rot_y = render.rot_y - M_PI / 2;
+	float rot_x = render.rot_x;// - M_PI / 2;
+	float rot_y = render.rot_y;// - M_PI / 2;
 	
 	float yaw_sin = sinf(rot_y);
 	float yaw_cos = cosf(rot_y);
@@ -121,6 +134,8 @@ void raycast_draw(size_t y_start, size_t y_end) {
 	int map_z = floorf(render.z);
 
 	uint8_t *pixel_line = render.framebuffer;
+	if (!pixel_line)
+		return ;
 	pixel_line += y_start * pitch;
 
 	float sx_inc = 2 * half_fov_tan * aspect / screen_width;
@@ -136,10 +151,9 @@ void raycast_draw(size_t y_start, size_t y_end) {
 		float dir_z = forward_z + right_z * sx_0 + up_z * sy;
 		for (size_t screen_x = 0; screen_x < screen_width; screen_x++) {
 
-
 			ray_t ray;
 			ray.dir_x = dir_x;
-			ray.dir_y = dir_y;
+			ray.dir_y = -dir_y;
 			ray.dir_z = dir_z;
 			ray.has_hit = 0;
 
@@ -149,20 +163,20 @@ void raycast_draw(size_t y_start, size_t y_end) {
 			//ray.dir_y *= vec_len_inv;
 			//ray.dir_z *= vec_len_inv;
 
-			cast_ray(&ray, map_x, map_y, map_z);
+			cast_ray(&ray, map_x, map_y, map_z, &clt.world);
 			if (!ray.has_hit)
 				*pixel = 0;
 			else {
 				ray.dist = 1;
 				if ((ray.x_percent < 0.5 && ray.y_percent < 0.5) || (ray.x_percent > 0.5 && ray.y_percent > 0.5)) {
-					if (ray.dist > 1)
-						*pixel = 0xff000000 | ((int)(0xff / ray.dist) << 8);
+					if (ray.y > 0)
+						*pixel = 0xffffff00;
 					else
 						*pixel = 0xff00ff00;
 				}
 				else
-					if (ray.dist > 1)
-						*pixel = 0xff000000 | ((int)(0xff / ray.dist) << 16) | ((int)(0xff / ray.dist));
+					if (ray.y > 0)
+						*pixel = 0xff00ffff;
 					else
 						*pixel = 0xffff00ff;
 			}
@@ -175,6 +189,4 @@ void raycast_draw(size_t y_start, size_t y_end) {
 		pixel_line += pitch;
 		sy += sy_inc;
 	}
-	SDL_UnlockTexture(render.texture);
-	SDL_RenderTexture(render.renderer, render.texture, NULL, NULL);
 }

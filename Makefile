@@ -13,7 +13,7 @@ OBJ_SERVER := $(OBJ_SERVER:src/%=%)
 OBJ_SERVER := $(addprefix obj/, $(OBJ_SERVER))
 HEADER_SERVER := include/server.h $(HEADER_COMMON)
 
-CFLAGS_CLIENT = $(CFLAGS_COMMON) -DSDL_MAIN_HANDLED=1 -mavx2 -msse2 -O3
+CFLAGS_CLIENT = $(CFLAGS_COMMON) -DSDL_MAIN_HANDLED=1 # -mavx2 -msse2 -O3
 LDFLAGS_CLIENT = -lSDL3 -lSDL3_image -lm
 LIBS_SO_CLIENT = ./libra.so
 

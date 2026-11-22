@@ -62,7 +62,7 @@ typedef struct {
 
 	mutex_barrier_t start_barrier;
 	mutex_barrier_t end_barrier;
-	SDL_Thread *threads;
+	SDL_Thread **threads;
 	size_t threads_len;
 
 	SDL_Mutex *kill_thread_mutex;
@@ -114,6 +114,7 @@ void render_reset();
 void render_update();
 
 void render_compute();
+int render_set_threads(size_t number);
 
 void clt_on_connect(ra_clt_ctx_t *ctx, int success);
 void clt_on_disconnect(ra_clt_ctx_t *ctx, int is_error);
