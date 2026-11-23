@@ -6,26 +6,39 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define WORLD_SIZE 64
 #define ENTITIES_MAX 4096
+
+#define CHUNK_SIZE (16)
+#define COORD_CUHNK(X) ((X) >> 4)
+#define COORD_OFFSET(X) ((X) & 0x0f)
+#define CHUNK_OFFSET(CX, CY, CZ, WIDTH) (CY * WIDTH * WIDTH + CZ * WIDTH + CX)
+#define COORD_TO_BLOCK(X, Y, Z) ((COORD_OFFSET(Y) << 8) | (COORD_OFFSET(Z) << 4) | COORD_OFFSET(X))
 
 #define RAD(X) ((X) * M_PI / 180.0)
 
 typedef struct {
 	float x;
 	float y;
-	float rot;
+	float rot_x;
+	float rot_y;
+	float rot_z;
 	uint32_t type;
 	uint32_t data;
 } entity_t;
 
 typedef struct {
-	uint16_t id;
-	uint32_t blocks[WORLD_SIZE][WORLD_SIZE][WORLD_SIZE];
+	uint32_t (*blocks)[CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE];
 
-	uint32_t entities_alloc;
+	uint32_t entitites_alloc; // contains entities that collide with this chunk
 	uint32_t entities_len;
 	entity_t *entities;
+} chunk_t;
+
+typedef struct {
+	uint16_t id;
+	chunk_t *chunks;
+	uint16_t width;
+	uint16_t height;
 } world_t;
 
 enum {

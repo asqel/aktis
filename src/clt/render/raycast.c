@@ -5,9 +5,17 @@
 #define INF (1e30f)
 
 static inline int block_is_solid(int x, int y, int z, world_t *world) {
-	if ((unsigned)x >= WORLD_SIZE || (unsigned)y >= WORLD_SIZE || (unsigned)z >= WORLD_SIZE)
+	size_t cx = COORD_CUHNK(x);
+	size_t cy = COORD_CUHNK(y);
+	size_t cz = COORD_CUHNK(z);
+	if (cx >= world->width || cy >= world->height || cz >= world->width)
 		return 0;
-	return world->blocks[z][y][x] != 0;
+	
+	chunk_t *chunk = &world->chunks[CHUNK_OFFSET(cx, cy, cz, world->width)];
+	if (!chunk->blocks)
+		return 0;
+	int a = (*chunk->blocks)[COORD_TO_BLOCK(x, y, z)] != 0;
+	return a;
 }
 
 static inline void cast_ray(ray_t *ray, int map_x, int map_y, int map_z, world_t *world) {
@@ -91,11 +99,11 @@ static inline void cast_ray(ray_t *ray, int map_x, int map_y, int map_z, world_t
 		}
 		if (dist > render_distance)
 			break;
-		if ((ray->dir_x < 0 && map_x < 0) || (ray->dir_x > 0 && map_x >= WORLD_SIZE))
+		if ((ray->dir_x < 0 && map_x < 0) || (ray->dir_x > 0 && map_x >= world->width * 16))
 			break;
-		if ((ray->dir_y < 0 && map_y < 0) || (ray->dir_y > 0 && map_y >= WORLD_SIZE))
+		if ((ray->dir_y < 0 && map_y < 0) || (ray->dir_y > 0 && map_y >= world->height * 16))
 			break;
-		if ((ray->dir_z < 0 && map_z < 0) || (ray->dir_z > 0 && map_z >= WORLD_SIZE))
+		if ((ray->dir_z < 0 && map_z < 0) || (ray->dir_z > 0 && map_z >= world->width * 16))
 			break;
 	}
 }
@@ -103,8 +111,8 @@ static inline void cast_ray(ray_t *ray, int map_x, int map_y, int map_z, world_t
 void raycast_draw(size_t y_start, size_t y_end) {
 	int pitch = render.framebuffer_pitch;
 
-	float rot_x = render.rot_x;// - M_PI / 2;
-	float rot_y = render.rot_y;// - M_PI / 2;
+	float rot_x = render.rot_x;
+	float rot_y = render.rot_y;
 	
 	float yaw_sin = sinf(rot_y);
 	float yaw_cos = cosf(rot_y);
