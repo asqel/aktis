@@ -7,7 +7,22 @@
 #define FPS_MS (1000 / 60)
 
 void place(int x, int y, int z) {
-	clt.world.blocks[z][y][x] = 1;
+	if (x < 0 || y < 0 || z < 0)
+		return ;
+	size_t cx = COORD_CUHNK(x);
+	size_t cy = COORD_CUHNK(y);
+	size_t cz = COORD_CUHNK(z);
+	if (cx >= clt.world.width || cy >= clt.world.height || cz >= clt.world.width)
+		return ;
+	chunk_t *chunk = &clt.world.chunks[CHUNK_OFFSET(cx, cy, cz, clt.world.width)];
+	if (!chunk->blocks) {
+		chunk->blocks = malloc(sizeof(uint32_t) * CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE);
+		if (!chunk->blocks)
+			return ;
+		for (size_t i = 0; i < CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE; i++)
+			(*chunk->blocks)[i] = 0;
+	}
+	(*chunk->blocks)[COORD_TO_BLOCK(x, y, z)] = 1;
 }
 
 void place_tree(int x, int y, int z) {
@@ -29,6 +44,24 @@ void place_tree(int x, int y, int z) {
 
 }
 
+int client_set_world_size(size_t width, size_t height) {
+	clt.world.chunks = malloc(sizeof(chunk_t) * width * width * height);
+	if (!clt.world.chunks)
+		return 1;
+	
+	clt.world.width = width;
+	clt.world.height = height;
+
+	for (size_t i = 0; i < width * height * width; i++) {
+		clt.world.chunks[i].blocks = NULL;
+		clt.world.chunks[i].entitites_alloc = 0;
+		clt.world.chunks[i].entities_len = 0;
+		clt.world.chunks[i].entities = NULL;
+	}
+
+	return 0;
+}
+
 int main() {
 	if (ra_init())
 		return 1;
@@ -42,33 +75,19 @@ int main() {
 		ra_exit();
 		return 1;
 	}
-	render.y = 2;
+	render.y = 10;
 	render.x = 2;
 	render.z = 2;
 	render.rot_x = 0;
 	render.rot_y = M_PI / 4;
+	client_set_world_size(2, 2);
 
 
-	for (int i = 0; i < WORLD_SIZE; i++) {
-		for (int k = 0; k < WORLD_SIZE; k++) {
-			clt.world.blocks[i][0][k] = 1;
-			clt.world.blocks[i][k][0] = 1;
-			clt.world.blocks[0][k][i] = 1;
-			clt.world.blocks[i][WORLD_SIZE - 1][k] = 1;
-			clt.world.blocks[i][k][WORLD_SIZE - 1] = 1;
-			clt.world.blocks[WORLD_SIZE - 1][k][i] = 1;
-
+	for (int i = 0; i < clt.world.width * 16; i++) {
+		for (int k = 0; k < clt.world.width * 16; k++) {
+			place(i, 0, k);
 		}
-		clt.world.blocks[i][i][i] = 1;
 	}
-	//for (int i = 0; i < WORLD_SIZE; i++) {
-	//	for (int k = 0; k < WORLD_SIZE; k++) {
-	//		clt.world.blocks[i][k][20] = 1;
-	//	}
-	//}
-	place_tree(10, 1, 10);
-	place_tree(15, 1, 10);
-	place_tree(10, 1, 15);
 	while (1) {
 		uint32_t t0 = SDL_GetTicks();
 

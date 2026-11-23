@@ -214,17 +214,3 @@ int render_set_threads(size_t number) {
 	
 	return 0;
 }
-
-
-
-/*
-
-if (a || b) {
-
-
-	if (!a && b) {
-		
-	}
-}
-
-*/
