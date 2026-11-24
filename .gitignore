@@ -61,3 +61,4 @@ SDL/
 build/
 obj/
 game
+*.spv

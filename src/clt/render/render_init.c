@@ -75,7 +75,8 @@ static int init_gpu_map_buffer(void) {
 
 static int init_raycast_pipeline(void) {
 	size_t code_size = 0;
-	void *code = SDL_LoadFile("src/clt/shaders/build/raycast.comp.spv", &code_size);
+	void *code = SDL_LoadFile("shaders/raycast.comp.spv", &code_size);
+	printf("%p\n", code);
 	SDL_GPUComputePipelineCreateInfo cpi = {0};
 	cpi.code = (const uint8_t *)code;
 	cpi.code_size = code_size;

@@ -21,14 +21,20 @@ CFLAGS_SERVER = $(CFLAGS_COMMON)
 LDFLAGS_SERVER =
 LIBS_SO_SERVER = ./libra.so
 
-
 CC = gcc
 LD = gcc
 
 NAME_CLIENT = game
 NAME_SERVER = server
 
-all: $(NAME_CLIENT) $(NAME_SERVER)
+SHADERS_SRC = $(wildcard src/shaders/*)
+SHADERS_OBJ = $(SHADERS_SRC:.hlsl=.spv)
+SHADERS_OBJ := $(SHADERS_OBJ:src/%=%)
+SHADERS_OBJ := $(addprefix ./, $(SHADERS_OBJ))
+
+all: $(SHADERS_OBJ) $(NAME_CLIENT) #$(NAME_SERVER)
+	echo WARNING SERVER COMPILE DISABLED
+	#! TODO
 
 $(NAME_CLIENT): $(LIBS_SO_CLIENT) $(OBJ_CLIENT)
 	$(LD) $(OBJ_CLIENT) $(CFLAGS_CLIENT) $(LDFLAGS_CLIENT) -o $(NAME_CLIENT) $(LIBS_SO_CLIENT)
@@ -51,6 +57,11 @@ obj/common/%.o: src/common/%.c $(HEADER_COMMON)
 	@mkdir -p $(dir $@)
 	@$(CC) -c $< -o $@ $(CFLAGS_COMMON)
 
+shaders/%.comp.spv: src/shaders/%.comp.hlsl
+	mkdir -p $(dir $@)
+	dxc -spirv -fspv-target-env=vulkan1.0 -T cs_6_0 -E main $< -Fo $@
+	cp $@ ./
+
 ./libra.so:
 	make -C raisin/
 	cp raisin/libra.so ./
@@ -58,6 +69,7 @@ obj/common/%.o: src/common/%.c $(HEADER_COMMON)
 clean:
 	rm -rf $(OBJ_CLIENT)
 	rm -rf $(OBJ_SERVER)
+	rm -rf $(SHADERS_OBJ)
 
 fclean: clean
 	rm -rf $(LIBS_SO_CLIENT)
