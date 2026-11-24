@@ -45,6 +45,7 @@ void place_tree(int x, int y, int z) {
 }
 
 int client_set_world_size(size_t width, size_t height) {
+	render.render_distance = width;
 	clt.world.chunks = malloc(sizeof(chunk_t) * width * width * height);
 	if (!clt.world.chunks)
 		return 1;
@@ -63,24 +64,25 @@ int client_set_world_size(size_t width, size_t height) {
 }
 
 int main() {
-	if (ra_init())
-		return 1;
-	if (render_init()) {
+	client_set_world_size(2, 2);
+	place_tree(10, 0, 10);
+	//if (ra_init())
+	//return 1;
+	if (init_render()) {
 		ra_exit();
 		return 1;
 	}
 
-	if (init_font()) {
-		render_exit();
-		ra_exit();
-		return 1;
-	}
-	render.y = 10;
+	//if (init_font()) {
+	//	render_exit();
+	//	ra_exit();
+	//	return 1;
+	//}
+	render.y = 2;
 	render.x = 2;
 	render.z = 2;
 	render.rot_x = 0;
 	render.rot_y = M_PI / 4;
-	client_set_world_size(2, 2);
 
 
 	for (int i = 0; i < clt.world.width * 16; i++) {
@@ -142,15 +144,16 @@ int main() {
 
 		client_update();
 
-		render_reset();
-		client_draw();
-		render_update();
+		//render_reset();
+		//client_draw();
+		//render_update();
+		render_draw();
 
 		uint32_t frame_time = SDL_GetTicks() - t0;
 		if (frame_time)
 			printf("%u\n", 1000 / frame_time);
-		if (frame_time < FPS_MS)
-			SDL_Delay(FPS_MS - frame_time);
+		//if (frame_time < FPS_MS)
+			//SDL_Delay(FPS_MS - frame_time);
 	}
 
 	end:

@@ -7,6 +7,6 @@ void client_fail(const char *msg) {
 	clt.state = CLT_FAIL;
 }
 
-void client_draw_fail() {
-	draw_text(fail_msg, 50, 50, 2, 255, 0, 0);
-}
+//void client_draw_fail() {
+//	draw_text(fail_msg, 50, 50, 2, 255, 0, 0);
+//}

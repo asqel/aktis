@@ -28,6 +28,7 @@ typedef struct {
 
 typedef struct {
 	uint32_t (*blocks)[CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE];
+	uint8_t dirty;
 
 	uint32_t entitites_alloc; // contains entities that collide with this chunk
 	uint32_t entities_len;

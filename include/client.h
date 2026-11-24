@@ -36,7 +36,7 @@ typedef struct {
 	int generation;
 } mutex_barrier_t;
 
-void wait_barriere(mutex_barrier_t *barrier);
+//void wait_barriere(mutex_barrier_t *barrier);
 
 typedef struct {
 	double x;
@@ -57,8 +57,13 @@ typedef struct {
 	size_t base_width;
 	size_t base_height;
 
-	SDL_Renderer *renderer;
-	SDL_Window *window;
+	SDL_Window *win;
+	SDL_GPUDevice *dev;
+
+	SDL_GPUComputePipeline *raycast_pipeline;
+	SDL_GPUTexture *raycast_texture;
+	SDL_GPUBuffer *world_buffer;
+	SDL_GPUTransferBuffer *world_transfer_buffer;
 
 	mutex_barrier_t start_barrier;
 	mutex_barrier_t end_barrier;
@@ -82,7 +87,7 @@ typedef struct {
 	uint8_t has_hit;
 } ray_t;
 
-void raycast_draw(size_t y_start, size_t y_end);
+//void raycast_draw(size_t y_start, size_t y_end);
 
 extern renderer_t render;
 
@@ -102,34 +107,30 @@ enum {
 	CLT_FAIL,
 };
 
-void client_draw();
+//void client_draw();
 void client_update();
 
 
-void render_exit();
-int render_init();
-int render_set_res_base(size_t base_width, size_t base_height);
-int render_set_res_mult(size_t new_mult);
-void render_reset();
-void render_update();
+int init_render();
+int render_draw(void);
 
-void render_compute();
-int render_set_threads(size_t number);
+//void render_compute();
+//int render_set_threads(size_t number);
 
 void clt_on_connect(ra_clt_ctx_t *ctx, int success);
 void clt_on_disconnect(ra_clt_ctx_t *ctx, int is_error);
 void clt_on_recv(ra_clt_ctx_t *ctx, void *data, size_t data_len);
 void clt_on_send_ready(ra_clt_ctx_t *ctx);
 
-int init_font();
-void exit_font();
-void draw_text(const char *str, int x, int y, double scale, uint8_t r, uint8_t g, uint8_t b);
-void draw_text_centered(const char *text, int y, int scale, uint8_t r, uint8_t g, uint8_t b);
+//int init_font();
+//void exit_font();
+//void draw_text(const char *str, int x, int y, double scale, uint8_t r, uint8_t g, uint8_t b);
+//void draw_text_centered(const char *text, int y, int scale, uint8_t r, uint8_t g, uint8_t b);
 
 void clt_on_key(SDL_Event *ev);
 
 void client_fail(const char *msg);
-void client_draw_fail();
+//void client_draw_fail();
 
 enum {
 	DIR_NORTH,
