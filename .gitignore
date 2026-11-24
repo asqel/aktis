@@ -37,6 +37,7 @@
 *.hex
 
 # Debug files
+#vgcore.*
 *.dSYM/
 *.su
 *.idb
