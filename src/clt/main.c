@@ -98,52 +98,65 @@ int main() {
 			if (ev.type == SDL_EVENT_QUIT)
 				goto end;
 			if (ev.type == SDL_EVENT_MOUSE_MOTION) {
-				render.rot_x += ev.motion.yrel * 0.002;
-				render.rot_y -= ev.motion.xrel * 0.002;
+				render.rot_x -= ev.motion.yrel * 0.002;
+				render.rot_y += ev.motion.xrel * 0.002;
 			}
 			if (ev.type == SDL_EVENT_KEY_DOWN) {
 				if (ev.key.scancode == SDL_SCANCODE_LEFT)
-					render.rot_y -= 0.05;
+				render.rot_y -= 0.05;
 				else if (ev.key.scancode == SDL_SCANCODE_RIGHT)
-					render.rot_y += 0.05;
+				render.rot_y += 0.05;
 				if (ev.key.scancode == SDL_SCANCODE_UP)
-					render.rot_x -= 0.05;
+				render.rot_x -= 0.05;
 				if (ev.key.scancode == SDL_SCANCODE_DOWN)
-					render.rot_x += 0.05;
+				render.rot_x += 0.05;
 				if (ev.key.scancode == SDL_SCANCODE_SPACE)
-					render.y += 0.2;
+				render.y += 0.2;
 				if (ev.key.scancode == SDL_SCANCODE_LSHIFT)
-					render.y -= 0.2;
-				if (ev.key.scancode == SDL_SCANCODE_W || ev.key.scancode == SDL_SCANCODE_S) {
-					float rot_x = 0;
-					float rot_y = render.rot_y;
-					
-					float yaw_sin = sinf(rot_y);
-					float yaw_cos = cosf(rot_y);
-					float pitch_sin = sinf(rot_x);
-					float pitch_cos = cosf(rot_x);
-					float forward_x = pitch_cos * yaw_cos;
-					float forward_y = pitch_sin;
-					float forward_z = pitch_cos * yaw_sin;
-
-					float speed = 5;
-					if (ev.key.scancode == SDL_SCANCODE_W) {
-						render.x += forward_x * 0.05 * speed;
-						render.y += forward_y * 0.05 * speed;
-						render.z += forward_z * 0.05 * speed;
-					}
-					else {
-						render.x -= forward_x * 0.05 * speed;
-						render.y -= forward_y * 0.05 * speed;
-						render.z -= forward_z * 0.05 * speed;
-					}
-				}
+				render.y -= 0.2;
 			}
 			clt_on_key(&ev);
 		}
-
+		const bool *k = SDL_GetKeyboardState(NULL);
+		if (k[SDL_SCANCODE_W] || k[SDL_SCANCODE_S] || k[SDL_SCANCODE_A] || k[SDL_SCANCODE_D]) {
+			float rot_x = 0;
+			float rot_y = render.rot_y;
+			
+			float yaw_sin = sinf(rot_y);
+			float yaw_cos = cosf(rot_y);
+			float pitch_sin = sinf(rot_x);
+			float pitch_cos = cosf(rot_x);
+			float forward_x = pitch_cos * yaw_cos;
+			float forward_y = pitch_sin;
+			float forward_z = pitch_cos * yaw_sin;
+			float right_x = -forward_z ;
+			float right_y = 0.0f;
+			float right_z = forward_x;
+			float speed = 5;
+			if (k[SDL_SCANCODE_W]) {
+				render.x += forward_x * 0.05 * speed;
+				render.y += forward_y * 0.05 * speed;
+				render.z += forward_z * 0.05 * speed;
+			}
+			if (k[SDL_SCANCODE_S]) {
+				render.x -= forward_x * 0.05 * speed;
+				render.y -= forward_y * 0.05 * speed;
+				render.z -= forward_z * 0.05 * speed;
+			}
+			if (k[SDL_SCANCODE_A]) {
+				render.x -= right_x * 0.05 * speed;
+				render.y -= right_y * 0.05 * speed;
+				render.z -= right_z * 0.05 * speed;
+			}
+			if (k[SDL_SCANCODE_D]) {
+				render.x += right_x * 0.05 * speed;
+				render.y += right_y * 0.05 * speed;
+				render.z += right_z * 0.05 * speed;
+			}
+		}
+		
 		client_update();
-
+		
 		//render_reset();
 		//client_draw();
 		//render_update();

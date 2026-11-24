@@ -1,9 +1,10 @@
-// raycast.slang
+// raycast.hlsl
 // Raycaster voxel. Un thread = un pixel.
 
-//slangc src/clt/shaders/src/raycast.slang -target spirv -entry main -stage compute -o src/clt/shaders/build/raycast.comp.spv
-//slangc raycast.slang - target dxil - profile cs_6_0 - entry main - stage compute - o raycast.comp.dxil
-//slangc raycast.slang - target metal - entry main - stage compute - o raycast.comp.metal
+// DXIL :
+//   dxc -T cs_6_0 -E main -Wno-ignored-attributes raycast.hlsl -Fo raycast.comp.dxil
+// SPIR-V (Vulkan) :
+//   dxc -spirv -fspv-target-env=vulkan1.0 -T cs_6_0 -E main src/clt/shaders/src/raycast.hlsl -Fo src/clt/shaders/build/raycast.comp.spv
 
 // Taille du monde chargé sur le GPU, en chunks. À garder identique au C.
 #ifndef WORLD_W
@@ -28,17 +29,18 @@ struct Cam
 //   space0 : buffers/textures en lecture seule   (t#)
 //   space1 : buffers/textures en lecture-écriture (u#)
 //   space2 : uniform buffers                      (b#)
+// Les attributs [[vk::...]] ne servent qu'à la cible SPIR-V, ils sont ignorés pour DXIL.
 [[vk::binding(0, 0)]]
 StructuredBuffer<uint> blocks : register(t0, space0);
 
-[[vk::binding(0, 1)]] [format("rgba8")]
+[[vk::binding(0, 1), vk::image_format("rgba8")]]
 RWTexture2D<float4> outImage : register(u0, space1);
 
 [[vk::binding(0, 2)]]
 ConstantBuffer<Cam> cam : register(b0, space2);
 
 static const float3 PALETTE[5] = {
-    float3(0.0),
+    float3(0.0, 0.0, 0.0),
     float3(0.35, 0.75, 0.35),
     float3(0.25, 0.55, 0.25),
     float3(0.75, 0.70, 0.60),
@@ -70,7 +72,7 @@ struct ray_t {
     float dist;
     int1 has_hit;
 
-}
+};
 
 #define EPSILON (0.000001f)
 #define INF (1e30f)
@@ -100,7 +102,7 @@ static void cast_ray(inout ray_t ray, int map_x, int map_y, int map_z) {
     int side = 0;
     float dist = 0;
 
-    size_t render_distance = 125;
+    uint render_distance = 125;
     while (true) {
         uint block = fetchBlock(int3(map_x, map_y, map_z));
         if (block != 0) {
@@ -166,9 +168,8 @@ static void cast_ray(inout ray_t ray, int map_x, int map_y, int map_z) {
     }
 }
 
-[shader("compute")]
 [numthreads(8, 8, 1)]
-void main(uint3 tid: SV_DispatchThreadID)
+void main(uint3 tid : SV_DispatchThreadID)
 {
     int2 px = int2(tid.xy);
 

@@ -127,15 +127,7 @@ render.res_mult = 1;
 		SDL_Log("SDL_CreateWindow, error: %s", SDL_GetError());
 		return 1;
 	}
-	SDL_GPUVulkanOptions vk_ops = {0};
-	vk_ops.vulkan_api_version = (1u << 22) | (2u << 12);
-
-	SDL_PropertiesID props = SDL_CreateProperties();
-	SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_SPIRV_BOOLEAN, true);
-	SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_DEBUGMODE_BOOLEAN, true);
-	SDL_SetPointerProperty(props, SDL_PROP_GPU_DEVICE_CREATE_VULKAN_OPTIONS_POINTER, &vk_ops);
-	render.dev = SDL_CreateGPUDeviceWithProperties(props);
-	SDL_DestroyProperties(props);
+	render.dev = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, true, NULL);
 	if (!render.dev) {
 		SDL_Log("SDL_CreateGPUDevice, error: %s", SDL_GetError());
 		return 1;

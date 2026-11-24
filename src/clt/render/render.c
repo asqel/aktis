@@ -27,8 +27,6 @@ int render_draw(void) {
     float rx = -yaw_sin;
     float ry = 0;
     float rz = yaw_cos;
-    //float rl = sqrtf(rx * rx + rz * rz);
-    //rx /= rl; rz /= rl;
     
     float ux = -pitch_sin * yaw_cos;                              // cross(right, fwd)
     float uy = pitch_cos;
