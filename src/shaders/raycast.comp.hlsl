@@ -14,6 +14,9 @@
 #define WORLD_H 2 // chunks en Y
 #endif
 
+#define TILE_SIZE 16
+
+
 static const int3 WORLD_SIZE = int3(WORLD_W * 16, WORLD_H * 16, WORLD_W * 16);
 
 struct Cam
@@ -30,8 +33,12 @@ struct Cam
 //   space1 : buffers/textures en lecture-écriture (u#)
 //   space2 : uniform buffers                      (b#)
 // Les attributs [[vk::...]] ne servent qu'à la cible SPIR-V, ils sont ignorés pour DXIL.
+
 [[vk::binding(0, 0)]]
-StructuredBuffer<uint> blocks : register(t0, space0);
+Texture2D<float4> atlas : register(t0, space0);
+
+[[vk::binding(1, 0)]]
+StructuredBuffer<uint> blocks : register(t1, space0);
 
 [[vk::binding(0, 1), vk::image_format("rgba8")]]
 RWTexture2D<float4> outImage : register(u0, space1);
@@ -46,6 +53,8 @@ static const float3 PALETTE[5] = {
     float3(0.75, 0.70, 0.60),
     float3(0.90, 0.35, 0.30)
 };
+
+
 
 // Lit un bloc à partir de ses coordonnées monde (déjà vérifiées dans les bornes).
 // Chunks à la suite : le chunk i commence à i * 4096.
@@ -70,7 +79,8 @@ struct ray_t {
     float x_percent;
     float y_percent;
     float dist;
-    int1 has_hit;
+    int has_hit;
+    int side;
 
 };
 
@@ -136,6 +146,7 @@ static void cast_ray(inout ray_t ray, int map_x, int map_y, int map_z) {
             ray.y = map_y;
             ray.z = map_z;
             ray.dist = dist;
+            ray.side = side;
             return;
         }
 
@@ -173,6 +184,10 @@ static void cast_ray(inout ray_t ray, int map_x, int map_y, int map_z) {
 [numthreads(8, 8, 1)]
 void main(uint3 tid : SV_DispatchThreadID)
 {
+    uint aw, ah;
+    atlas.GetDimensions(aw, ah);
+    int tilesX = aw / TILE_SIZE;
+
     int2 px = int2(tid.xy);
 
     // Résolution lue depuis la texture de sortie
@@ -204,12 +219,21 @@ void main(uint3 tid : SV_DispatchThreadID)
     cast_ray(ray, map_x, map_y, map_z);
 
     if (ray.has_hit == 1) {
-        if ((ray.x_percent < 0.5 && ray.y_percent < 0.5) || (ray.y_percent > 0.5 && ray.x_percent > 0.5))
-            outImage[uint2(px)] = float4(1, 1, 0, 1.0);
-        else
-            outImage[uint2(px)] = RGB(0, 0, 255);
+        uint id = fetchBlock(int3(ray.x, ray.y, ray.z));
+        int tile = (int)id - 1; // id 1 -> tuile 0, id 2 -> tuile 1, ...
+
+        int2 tileOrigin = int2((tile % tilesX) * TILE_SIZE, (tile / tilesX) * TILE_SIZE);
+
+        // Sur les faces verticales y_percent monte vers le haut, la texture descend
+        float u = ray.x_percent;
+        float v = (ray.side == 1) ? ray.y_percent : (1.0 - ray.y_percent);
+
+        int2 t = clamp(int2(float2(u, v) * 16), 0, 16 - 1);
+
+        float4 texel = atlas.Load(int3(tileOrigin + t, 0));
+        outImage[uint2(px)] = float4(texel.rgb, 1.0);
     }
     else {
-            outImage[uint2(px)] = RGB(0x48, 0x35, 0x7f);
-	}
+        outImage[uint2(px)] = float4(0.0, 0.0, 0.0, 0.0);
+    }
 }

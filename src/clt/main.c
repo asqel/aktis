@@ -110,10 +110,6 @@ int main() {
 				render.rot_x -= 0.05;
 				if (ev.key.scancode == SDL_SCANCODE_DOWN)
 				render.rot_x += 0.05;
-				if (ev.key.scancode == SDL_SCANCODE_SPACE)
-				render.y += 0.2;
-				if (ev.key.scancode == SDL_SCANCODE_LSHIFT)
-				render.y -= 0.2;
 			}
 			clt_on_key(&ev);
 		}
@@ -153,6 +149,12 @@ int main() {
 				render.y += right_y * 0.05 * speed;
 				render.z += right_z * 0.05 * speed;
 			}
+		}
+		if (k[SDL_SCANCODE_SPACE]) {
+			render.y += 0.2;
+		}
+		if (k[SDL_SCANCODE_LSHIFT]) {
+			render.y -= 0.2;
 		}
 		
 		client_update();

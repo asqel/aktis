@@ -39,6 +39,12 @@ typedef struct {
 //void wait_barriere(mutex_barrier_t *barrier);
 
 typedef struct {
+	SDL_GPUTexture *tex;
+	Uint32 width;
+	Uint32 height;
+} GPUTexture_t;
+
+typedef struct {
 	double x;
 	double y;
 	double z;
@@ -46,24 +52,29 @@ typedef struct {
 	double rot_y;
 	double fov;
 	size_t render_distance;
-	SDL_Texture *texture;
 	void *framebuffer;
 	int framebuffer_pitch;
-
+	
 	size_t width;
 	size_t height;
-
-	size_t res_mult;
+	
 	size_t base_width;
 	size_t base_height;
-
+	
 	SDL_Window *win;
 	SDL_GPUDevice *dev;
-
+	
 	SDL_GPUComputePipeline *raycast_pipeline;
 	SDL_GPUTexture *raycast_texture;
 	SDL_GPUBuffer *world_buffer;
 	SDL_GPUTransferBuffer *world_transfer_buffer;
+	
+	GPUTexture_t *atlas;
+	
+	SDL_GPUSampler *img_sampler;
+	SDL_GPUGraphicsPipeline *img_pipeline;
+	
+	GPUTexture_t *font;
 
 	mutex_barrier_t start_barrier;
 	mutex_barrier_t end_barrier;
@@ -111,6 +122,8 @@ enum {
 void client_update();
 
 
+
+SDL_GPUShader *load_shader(SDL_GPUDevice *gpu, char *shader_file, Uint32 num_uniform_buf, Uint32 num_samplers);
 int init_render();
 int render_draw(void);
 

@@ -62,6 +62,16 @@ shaders/%.comp.spv: src/shaders/%.comp.hlsl
 	dxc -spirv -fspv-target-env=vulkan1.0 -T cs_6_0 -E main $< -Fo $@
 	cp $@ ./
 
+shaders/%.vert.spv: src/shaders/%.vert.hlsl
+	mkdir -p $(dir $@)
+	dxc -spirv -fspv-target-env=vulkan1.0 -T vs_6_0 -E main $< -Fo $@
+	cp $@ ./
+
+shaders/%.frag.spv: src/shaders/%.frag.hlsl
+	mkdir -p $(dir $@)
+	dxc -spirv -fspv-target-env=vulkan1.0 -T ps_6_0 -E main $< -Fo $@
+	cp $@ ./
+
 ./libra.so:
 	make -C raisin/
 	cp raisin/libra.so ./
