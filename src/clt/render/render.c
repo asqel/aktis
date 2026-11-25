@@ -66,12 +66,12 @@ int render_draw(void) {
     blit.source.w            = render.base_width;
     blit.source.h            = render.base_height;
     blit.destination.texture = swap;
-    blit.destination.w       = sw;
-    blit.destination.h       = sh;
+    blit.destination.w       = render.base_width * scale;
+    blit.destination.h       = render.base_height * scale;
     blit.load_op             = SDL_GPU_LOADOP_DONT_CARE;
     blit.filter              = SDL_GPU_FILTER_NEAREST;
-    blit.destination.x = 0;
-    blit.destination.y = 0;
+    blit.destination.x = sw / 2 - blit.destination.w / 2;
+    blit.destination.y = sh / 2 - blit.destination.h / 2;
     SDL_BlitGPUTexture(cmd, &blit);
 
     // Présentation.

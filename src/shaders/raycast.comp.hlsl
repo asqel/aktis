@@ -168,6 +168,8 @@ static void cast_ray(inout ray_t ray, int map_x, int map_y, int map_z) {
     }
 }
 
+#define RGB(R, G, B) (float4((float)(R) / 0xff, (float)(G) / 0xff, (float)(B) / 0xff, 1.0))
+
 [numthreads(8, 8, 1)]
 void main(uint3 tid : SV_DispatchThreadID)
 {
@@ -205,8 +207,9 @@ void main(uint3 tid : SV_DispatchThreadID)
         if ((ray.x_percent < 0.5 && ray.y_percent < 0.5) || (ray.y_percent > 0.5 && ray.x_percent > 0.5))
             outImage[uint2(px)] = float4(1, 1, 0, 1.0);
         else
-            outImage[uint2(px)] = float4(0, 0, 1, 1.0);
+            outImage[uint2(px)] = RGB(0, 0, 255);
     }
-    else
-        outImage[uint2(px)] = float4(0, 0, 0, 1.0);
+    else {
+            outImage[uint2(px)] = RGB(0x48, 0x35, 0x7f);
+	}
 }
