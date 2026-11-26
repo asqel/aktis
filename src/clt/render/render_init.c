@@ -74,7 +74,7 @@ static GPUTexture_t *init_gpu_texture_buffer(char *path) {
 
 	SDL_GPUCommandBuffer *cmd_buff = SDL_AcquireGPUCommandBuffer(render.dev);
 	SDL_GPUCopyPass *cp = SDL_BeginGPUCopyPass(cmd_buff);
-	res->tex = IMG_LoadGPUTexture(render.dev, cp, path, (int *)&res->width, (int *)&res->height);
+	res->tex = load_gpu_texture(render.dev, cp, path, (int *)&res->width, (int *)&res->height);
 	if (!res->tex) {
 		SDL_Log("error loading texture");
 		return NULL;

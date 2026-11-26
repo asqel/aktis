@@ -123,6 +123,7 @@ void client_update();
 
 
 
+SDL_GPUTexture *load_gpu_texture(SDL_GPUDevice *device, SDL_GPUCopyPass *copy_pass, const char *file, int *width, int *height);
 SDL_GPUShader *load_shader(SDL_GPUDevice *gpu, char *shader_file, Uint32 num_uniform_buf, Uint32 num_samplers);
 int init_render();
 int render_draw(void);
