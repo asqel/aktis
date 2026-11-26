@@ -21,11 +21,7 @@ typedef struct {
 	buffer_t send;
 	char name[7];
 	size_t ent_idx;
-	double x; // this is always update the same as entities[ent_idx].*
-	double y;
-	double z;
-	double rot_x;
-	double rot_y;
+
 } client_t;
 
 typedef struct {
@@ -45,16 +41,31 @@ typedef struct {
 } GPUTexture_t;
 
 typedef struct {
-	double x;
-	double y;
-	double z;
-	double rot_x;
-	double rot_y;
-	double fov;
+	float x;
+	float y;
+	float z;
+	// rot_X
+	float pitch;
+	// rot_y 
+	float yaw;
+	float pitch_sin;
+	float pitch_cos;
+	float yaw_sin;
+	float yaw_cos;
+	float forward_x;
+	float forward_y;
+	float forward_z;
+	float right_x;
+	float right_y;
+	float right_z;
+	float fov;
+} camera_t;
+
+
+typedef struct {
+	camera_t cam;
 	size_t render_distance;
-	void *framebuffer;
-	int framebuffer_pitch;
-	
+
 	size_t width;
 	size_t height;
 	
@@ -76,13 +87,6 @@ typedef struct {
 	
 	GPUTexture_t *font;
 
-	mutex_barrier_t start_barrier;
-	mutex_barrier_t end_barrier;
-	SDL_Thread **threads;
-	size_t threads_len;
-
-	SDL_Mutex *kill_thread_mutex;
-	uint8_t kill_thread;
 } renderer_t;
 
 typedef struct {

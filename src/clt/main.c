@@ -78,17 +78,21 @@ int main() {
 		return 1;
 	}
 
-	//if (init_font()) {
-	//	render_exit();
-	//	ra_exit();
-	//	return 1;
-	//}
-	render.y = 2;
-	render.x = 2;
-	render.z = 2;
-	render.rot_x = 0;
-	render.rot_y = M_PI / 4;
-
+	render.cam.y = 2;
+	render.cam.x = 2;
+	render.cam.z = 2;
+	render.cam.pitch = 0;
+	render.cam.yaw = M_PI / 4;
+	render.cam.pitch_cos = cosf(render.cam.pitch);
+	render.cam.pitch_sin = sinf(render.cam.pitch);
+	render.cam.yaw_cos = cosf(render.cam.yaw);
+	render.cam.yaw_sin = sinf(render.cam.yaw);
+	render.cam.forward_x = render.cam.pitch_cos * render.cam.yaw_cos;
+	render.cam.forward_y = render.cam.pitch_sin;
+	render.cam.forward_z = render.cam.pitch_cos * render.cam.yaw_sin;
+	render.cam.right_x = -render.cam.yaw_sin;
+	render.cam.right_y = 0;
+	render.cam.right_z = render.cam.yaw_cos;
 
 	while (1) {
 		uint32_t t0 = SDL_GetTicks();
@@ -98,63 +102,60 @@ int main() {
 			if (ev.type == SDL_EVENT_QUIT)
 				goto end;
 			if (ev.type == SDL_EVENT_MOUSE_MOTION) {
-				render.rot_x -= ev.motion.yrel * 0.002;
-				render.rot_y += ev.motion.xrel * 0.002;
-			}
-			if (ev.type == SDL_EVENT_KEY_DOWN) {
-				if (ev.key.scancode == SDL_SCANCODE_LEFT)
-				render.rot_y -= 0.05;
-				else if (ev.key.scancode == SDL_SCANCODE_RIGHT)
-				render.rot_y += 0.05;
-				if (ev.key.scancode == SDL_SCANCODE_UP)
-				render.rot_x -= 0.05;
-				if (ev.key.scancode == SDL_SCANCODE_DOWN)
-				render.rot_x += 0.05;
+				render.cam.pitch -= ev.motion.yrel * 0.002;
+				render.cam.yaw += ev.motion.xrel * 0.002;
+				render.cam.pitch_cos = cosf(render.cam.pitch);
+				render.cam.pitch_sin = sinf(render.cam.pitch);
+				render.cam.yaw_cos = cosf(render.cam.yaw);
+				render.cam.yaw_sin = sinf(render.cam.yaw);
+				render.cam.forward_x = render.cam.pitch_cos * render.cam.yaw_cos;
+				render.cam.forward_y = render.cam.pitch_sin;
+				render.cam.forward_z = render.cam.pitch_cos * render.cam.yaw_sin;
+				render.cam.right_x = -render.cam.yaw_sin;
+				render.cam.right_y = 0;
+				render.cam.right_z = render.cam.yaw_cos;
+
 			}
 			clt_on_key(&ev);
 		}
 		const bool *k = SDL_GetKeyboardState(NULL);
 		if (k[SDL_SCANCODE_W] || k[SDL_SCANCODE_S] || k[SDL_SCANCODE_A] || k[SDL_SCANCODE_D]) {
-			float rot_x = 0;
-			float rot_y = render.rot_y;
 			
-			float yaw_sin = sinf(rot_y);
-			float yaw_cos = cosf(rot_y);
-			float pitch_sin = sinf(rot_x);
-			float pitch_cos = cosf(rot_x);
-			float forward_x = pitch_cos * yaw_cos;
-			float forward_y = pitch_sin;
-			float forward_z = pitch_cos * yaw_sin;
+			float forward_x = 1 * render.cam.yaw_cos;
+			float forward_y = 0;
+			float forward_z = 1 * render.cam.yaw_sin;
 			float right_x = -forward_z ;
 			float right_y = 0.0f;
 			float right_z = forward_x;
-			float speed = 5;
+
+			float speed = 0.25;
+
 			if (k[SDL_SCANCODE_W]) {
-				render.x += forward_x * 0.05 * speed;
-				render.y += forward_y * 0.05 * speed;
-				render.z += forward_z * 0.05 * speed;
+				render.cam.x += forward_x * speed;
+				render.cam.y += forward_y * speed;
+				render.cam.z += forward_z * speed;
 			}
 			if (k[SDL_SCANCODE_S]) {
-				render.x -= forward_x * 0.05 * speed;
-				render.y -= forward_y * 0.05 * speed;
-				render.z -= forward_z * 0.05 * speed;
+				render.cam.x -= forward_x * speed;
+				render.cam.y -= forward_y * speed;
+				render.cam.z -= forward_z * speed;
 			}
 			if (k[SDL_SCANCODE_A]) {
-				render.x -= right_x * 0.05 * speed;
-				render.y -= right_y * 0.05 * speed;
-				render.z -= right_z * 0.05 * speed;
+				render.cam.x -= right_x * speed;
+				render.cam.y -= right_y * speed;
+				render.cam.z -= right_z * speed;
 			}
 			if (k[SDL_SCANCODE_D]) {
-				render.x += right_x * 0.05 * speed;
-				render.y += right_y * 0.05 * speed;
-				render.z += right_z * 0.05 * speed;
+				render.cam.x += right_x * speed;
+				render.cam.y += right_y * speed;
+				render.cam.z += right_z * speed;
 			}
 		}
 		if (k[SDL_SCANCODE_SPACE]) {
-			render.y += 0.2;
+			render.cam.y += 0.2;
 		}
 		if (k[SDL_SCANCODE_LSHIFT]) {
-			render.y -= 0.2;
+			render.cam.y -= 0.2;
 		}
 		
 		client_update();

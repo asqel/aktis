@@ -86,7 +86,7 @@ static GPUTexture_t *init_gpu_texture_buffer(char *path) {
 
 static int init_raycast_pipeline(void) {
 	size_t code_size = 0;
-	void *code = SDL_LoadFile("shaders/raycast.comp.spv", &code_size);
+	void *code = SDL_LoadFile("raycast.comp.spv", &code_size);
 	if (!code) {
 		SDL_Log("SDL_LoadFile, error: %s", SDL_GetError());
 		return 0;
@@ -128,8 +128,8 @@ static int init_raycast_pipeline(void) {
 
 int init_image_pipeline(void) {
 
-	SDL_GPUShader *vertex_shader = load_shader(render.dev, "shaders/image.vert.spv", 0, 1);
-	SDL_GPUShader *fragment_shader = load_shader(render.dev, "shaders/image.frag.spv", 1, 0);
+	SDL_GPUShader *vertex_shader = load_shader(render.dev, "image.vert.spv", 0, 1);
+	SDL_GPUShader *fragment_shader = load_shader(render.dev, "image.frag.spv", 1, 0);
 	if (!vertex_shader || !fragment_shader) {
 		SDL_Log("load_shader, error: %s", SDL_GetError());
 		return 0;
