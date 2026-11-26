@@ -6,7 +6,7 @@
 
 #define FPS_MS (1000 / 60)
 
-void place(int x, int y, int z) {
+void place(int x, int y, int z, uint32_t block) {
 	if (x < 0 || y < 0 || z < 0)
 		return ;
 	size_t cx = COORD_CUHNK(x);
@@ -22,25 +22,25 @@ void place(int x, int y, int z) {
 		for (size_t i = 0; i < CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE; i++)
 			(*chunk->blocks)[i] = 0;
 	}
-	(*chunk->blocks)[COORD_TO_BLOCK(x, y, z)] = 1;
+	(*chunk->blocks)[COORD_TO_BLOCK(x, y, z)] = block;
 }
 
 void place_tree(int x, int y, int z) {
-	place(x, y, z);
-	place(x, y + 1, z);
-	place(x, y + 2, z);
-	place(x, y + 3, z);
-	place(x, y + 4, z);
+	place(x, y, z, 1);
+	place(x, y + 1, z, 1);
+	place(x, y + 2, z, 1);
+	place(x, y + 3, z, 1);
+	place(x, y + 4, z, 1);
 
-	place(x + 1, y + 3, z);
-	place(x, y + 3, z + 1);
-	place(x - 1, y + 3, z);
-	place(x, y + 3, z - 1);
+	place(x + 1, y + 3, z, 5);
+	place(x, y + 3, z + 1, 5);
+	place(x - 1, y + 3, z, 5);
+	place(x, y + 3, z - 1, 5);
 
-	place(x + 1, y + 3, z + 1);
-	place(x - 1, y + 3, z - 1);
-	place(x - 1, y + 3, z + 1);
-	place(x + 1, y + 3, z - 1);
+	place(x + 1, y + 3, z + 1, 1);
+	place(x - 1, y + 3, z - 1, 1);
+	place(x - 1, y + 3, z + 1, 1);
+	place(x + 1, y + 3, z - 1, 1);
 
 }
 
@@ -66,6 +66,11 @@ int client_set_world_size(size_t width, size_t height) {
 int main() {
 	client_set_world_size(2, 2);
 	place_tree(10, 0, 10);
+	for (int i = 0; i < clt.world.width * 16; i++) {
+		for (int k = 0; k < clt.world.width * 16; k++) {
+			place(i, 0, k, 1);
+		}
+	}
 	//if (ra_init())
 	//return 1;
 	if (init_render()) {
@@ -85,11 +90,6 @@ int main() {
 	render.rot_y = M_PI / 4;
 
 
-	for (int i = 0; i < clt.world.width * 16; i++) {
-		for (int k = 0; k < clt.world.width * 16; k++) {
-			place(i, 0, k);
-		}
-	}
 	while (1) {
 		uint32_t t0 = SDL_GetTicks();
 
