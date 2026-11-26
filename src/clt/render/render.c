@@ -80,7 +80,9 @@ int render_raycast(SDL_GPUCommandBuffer *cmd, GPUTexture_t *swap) {
 	return 0;
 }
 
-int render_texture(SDL_GPUCommandBuffer *cmd, GPUTexture_t *swap, GPUTexture_t *texture) {
+void render_texture(GPUTexture_t *texture, SDL_FRect *src, SDL_FRect *dest, uint32_t tint) {
+	SDL_GPUCommandBuffer *cmd = render.gpu_cmd;
+	GPUTexture_t *swap = &render.swap;
 	SDL_GPUColorTargetInfo target_info = {0};
 	target_info.texture = swap->tex;
 	target_info.load_op = SDL_GPU_LOADOP_LOAD;
@@ -90,28 +92,22 @@ int render_texture(SDL_GPUCommandBuffer *cmd, GPUTexture_t *swap, GPUTexture_t *
 	if (!render_pass)
 		SDL_Log("error render_pass, %s\n", SDL_GetError());
 
-	char c = '1';
-	float cw = 10.0f;
-	float ch = 20.0f;
-
-	float src_x = (c & 0xF) * cw;
-	float src_y = (c >> 4)  * ch;
-
 	sprite_gpu_t push = {0};
-	push.position[0] = 200;
-	push.position[1] = 100;
-	push.size[0] = cw * 10;
-	push.size[1] = ch * 10;
-	push.uvPosition[0] = src_x / (float)texture->width;
-	push.uvPosition[1] = src_y / (float)texture->height;
-	push.uvSize[0] = cw / texture->width;
-	push.uvSize[1] = ch / texture->height;
+	push.position[0] = dest->x;
+	push.position[1] = dest->y;
+	push.size[0] = dest->w;
+	push.size[1] = dest->h;
+
+	push.uvPosition[0] = src->x / (float)texture->width;
+	push.uvPosition[1] = src->y / (float)texture->height;
+	push.uvSize[0] = src->w / texture->width;
+	push.uvSize[1] = src->h / texture->height;
 	push.screenSize[0] = swap->width;
 	push.screenSize[1] = swap->height;
-	push.color[0] = 1;
-	push.color[1] = 0;
-	push.color[2] = 1;
-	push.color[3] = 1;
+	push.color[0] = (tint & 0xff) / (float)0xff;
+	push.color[1] = ((tint >> 8) & 0xff) / (float)0xff;
+	push.color[2] = ((tint >> 16) & 0xff) / (float)0xff;
+	push.color[3] = ((tint >> 24) & 0xff) / (float)0xff;
 
 	SDL_BindGPUGraphicsPipeline(render_pass, render.img_pipeline);
 	SDL_PushGPUVertexUniformData(cmd, 0, &push, sizeof(push));
@@ -122,27 +118,20 @@ int render_texture(SDL_GPUCommandBuffer *cmd, GPUTexture_t *swap, GPUTexture_t *
 	SDL_BindGPUFragmentSamplers(render_pass, 0, &binding, 1);
 	SDL_DrawGPUPrimitives(render_pass, 6, 1, 0, 0);
 	SDL_EndGPURenderPass(render_pass);
-	return 0;
 }
 
-SDL_GPUCommandBuffer *cmd = NULL;
-
-int render_draw(void) {
-	cmd = SDL_AcquireGPUCommandBuffer(render.dev);
-	
-
-    GPUTexture_t swap = {0};
-	if (!SDL_WaitAndAcquireGPUSwapchainTexture(cmd, render.win, &swap.tex, &swap.width, &swap.height) || !swap.tex) {
-		SDL_SubmitGPUCommandBuffer(cmd);
+int render_start() {
+	render.gpu_cmd = SDL_AcquireGPUCommandBuffer(render.dev);
+	if (!SDL_WaitAndAcquireGPUSwapchainTexture(render.gpu_cmd, render.win, &render.swap.tex, &render.swap.width, &render.swap.height) || !render.swap.tex) {
+		SDL_SubmitGPUCommandBuffer(render.gpu_cmd);
 		return 1;
 	}
+	return 0;
 	
-	render_raycast(cmd, &swap);
-	render_texture(cmd, &swap, render.font);
+}
 
-	if (!SDL_SubmitGPUCommandBuffer(cmd)) {
+void render_end() {
+	if (!SDL_SubmitGPUCommandBuffer(render.gpu_cmd)) {
 		SDL_Log("Submit : %s", SDL_GetError());
 	}
-    cmd = NULL;
-	return 0;
 }

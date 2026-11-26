@@ -101,6 +101,10 @@ int main() {
 		while (SDL_PollEvent(&ev)) {
 			if (ev.type == SDL_EVENT_QUIT)
 				goto end;
+			if (ev.type == SDL_EVENT_KEY_DOWN) {
+				if (ev.key.scancode == SDL_SCANCODE_ESCAPE)
+					SDL_SetWindowRelativeMouseMode(render.win, !SDL_GetWindowRelativeMouseMode(render.win));
+			}
 			if (ev.type == SDL_EVENT_MOUSE_MOTION) {
 				render.cam.pitch -= ev.motion.yrel * 0.002;
 				render.cam.yaw += ev.motion.xrel * 0.002;
@@ -160,10 +164,9 @@ int main() {
 		
 		client_update();
 		
-		//render_reset();
-		//client_draw();
-		//render_update();
-		render_draw();
+		render_start();
+		client_draw();
+		render_end();
 
 		uint32_t frame_time = SDL_GetTicks() - t0;
 		if (frame_time)

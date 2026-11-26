@@ -87,6 +87,8 @@ typedef struct {
 	
 	GPUTexture_t *font;
 
+	SDL_GPUCommandBuffer *gpu_cmd;
+	GPUTexture_t swap;
 } renderer_t;
 
 typedef struct {
@@ -106,14 +108,7 @@ typedef struct {
 
 extern renderer_t render;
 
-typedef struct {
-	SDL_Texture *texture;
-	int width;
-	int height;
-} font_t;
-
 extern client_t clt;
-extern font_t font;
 
 enum {
 	CLT_START,
@@ -122,7 +117,12 @@ enum {
 	CLT_FAIL,
 };
 
-//void client_draw();
+int render_start();
+void render_end();
+int render_raycast(SDL_GPUCommandBuffer *cmd, GPUTexture_t *swap);
+void render_texture(GPUTexture_t *texture, SDL_FRect *src, SDL_FRect *dest, uint32_t tint);
+
+void client_draw();
 void client_update();
 
 
@@ -142,13 +142,13 @@ void clt_on_send_ready(ra_clt_ctx_t *ctx);
 
 //int init_font();
 //void exit_font();
-//void draw_text(const char *str, int x, int y, double scale, uint8_t r, uint8_t g, uint8_t b);
-//void draw_text_centered(const char *text, int y, int scale, uint8_t r, uint8_t g, uint8_t b);
+void draw_text(const char *str, int x, int y, double scale, uint8_t r, uint8_t g, uint8_t b);
+void draw_text_centered(const char *text, int y, int scale, uint8_t r, uint8_t g, uint8_t b);
 
 void clt_on_key(SDL_Event *ev);
 
 void client_fail(const char *msg);
-//void client_draw_fail();
+void client_draw_fail();
 
 enum {
 	DIR_NORTH,
