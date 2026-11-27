@@ -3,6 +3,7 @@
 #include <common.h>
 #include "raisin.h"
 #include "client.h"
+#include <malloc.h>
 
 #define FPS_MS (1000 / 60)
 
@@ -54,18 +55,21 @@ int client_set_world_size(size_t width, size_t height) {
 	
 	clt.world.width = width;
 	clt.world.height = height;
+	clt.world.dirty = 0;
 
 	for (size_t i = 0; i < width * height * width; i++) {
 		clt.world.chunks[i].blocks = NULL;
 		clt.world.chunks[i].entitites_alloc = 0;
 		clt.world.chunks[i].entities_len = 0;
 		clt.world.chunks[i].entities = NULL;
+		clt.world.chunks[i].dirty = 0;
 	}
 
 	return 0;
 }
 
 int main() {
+	init_blocks();
 	client_set_world_size(2, 2);
 	place_tree(10, 0, 10);
 	for (int i = 0; i < clt.world.width * 16; i++) {
@@ -107,7 +111,7 @@ int main() {
 				if (ev.key.scancode == SDL_SCANCODE_ESCAPE)
 					SDL_SetWindowRelativeMouseMode(render.win, !SDL_GetWindowRelativeMouseMode(render.win));
 				if (ev.key.scancode == SDL_SCANCODE_P)
-					place(render.cam.x, render.cam.y, render.cam.z, 1);
+					place(render.cam.x, render.cam.y, render.cam.z, 5 | ((rand() % 4) << 12));
 			}
 			if (ev.type == SDL_EVENT_MOUSE_MOTION) {
 				render.cam.pitch -= ev.motion.yrel * 0.002;
@@ -175,6 +179,8 @@ int main() {
 		uint32_t frame_time = SDL_GetTicks() - t0;
 		if (frame_time)
 			printf("%u\n", 1000 / frame_time);
+		malloc_stats();
+
 		//if (frame_time < FPS_MS)
 			//SDL_Delay(FPS_MS - frame_time);
 	}

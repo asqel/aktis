@@ -68,28 +68,35 @@ static int init_models_buffers() {
 
 	SDL_GPUBufferCreateInfo idx_list_bci = {
 		.usage = SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_READ,
-		.size = sizeof(uint32_t) * 1,
+		.size = sizeof(uint32_t) * block_count,
 	};
-	SDL_GPUBuffer *idx_lsit_buffer = SDL_CreateGPUBuffer(render.dev, &idx_list_bci);
+	render.block_idx_buffer = SDL_CreateGPUBuffer(render.dev, &idx_list_bci);
 
+	size_t model_count = 0;
+	for (size_t i = 0; i < block_count; i++) {
+		if (block_models[i].is_special)
+			model_count++;
+	}
 	SDL_GPUBufferCreateInfo model_bci = {
 		.usage = SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_READ,
-		.size = sizeof(float) * 6 * 1,
+		.size = sizeof(float) * 6 * model_count,
 	};
-	SDL_GPUBuffer *model_buffer = SDL_CreateGPUBuffer(render.dev, &model_bci);
+	render.block_models_buffer = SDL_CreateGPUBuffer(render.dev, &model_bci);
 
-
-	if (!idx_lsit_buffer || !render.chunks_buffer) {
+	if (!render.block_models_buffer || !render.block_idx_buffer) {
+		SDL_ReleaseGPUBuffer(render.dev, render.block_models_buffer); 
+		SDL_ReleaseGPUBuffer(render.dev, render.block_idx_buffer); 
 		SDL_Log("SDL_CreateGPUBuffer, error: %s", SDL_GetError());
 		return 0;
 	}
 
+
 	SDL_GPUTransferBufferCreateInfo tbci = {
 		.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-		.size = sizeof(uint32_t) * 1 //todo,
+		.size = idx_list_bci.size + model_bci.size
 	};
 	SDL_GPUTransferBuffer *transfer_buffer = SDL_CreateGPUTransferBuffer(render.dev, &tbci);
-	if (!render.blocks_buffer) {
+	if (!transfer_buffer) {
 		SDL_Log("SDL_CreateGPUTransferBuffer, error: %s", SDL_GetError());
 		return 0;
 	}
@@ -100,8 +107,20 @@ static int init_models_buffers() {
 		SDL_ReleaseGPUTransferBuffer(render.dev, transfer_buffer);
 		return 0;
 	}
-	//memcpy(ptr, idx_lsit_buffer, 1); TODO
-	//memcpy(ptr + autre, model_buffer, 1); TODO
+	uint32_t *blocks_idx = (void *)ptr;
+	float *block_models_data = (void *)(ptr + idx_list_bci.size);
+	uint32_t current = 0;
+	for (size_t i = 0; i < block_count; i++) {
+		if (block_models[i].is_special) {
+			blocks_idx[i] = current;
+			memcpy(&block_models_data[current], block_models[i].aabb_min, sizeof(float) * 3);
+			memcpy(&block_models_data[current + 3], block_models[i].aabb_max, sizeof(float) * 3);
+
+			current += 6;
+		}
+		else
+			blocks_idx[i] = (uint32_t)-1;
+	}
 	SDL_UnmapGPUTransferBuffer(render.dev, transfer_buffer);
 
 	SDL_GPUCommandBuffer *cmd  = SDL_AcquireGPUCommandBuffer(render.dev);
@@ -113,16 +132,16 @@ static int init_models_buffers() {
 	src.transfer_buffer = transfer_buffer;
 	src.offset = 0;
 
-	dst.buffer = idx_lsit_buffer;
+	dst.buffer = render.block_idx_buffer;
 	dst.offset = 0;
-	dst.size = 1;//todo,
+	dst.size = idx_list_bci.size;
 	SDL_UploadToGPUBuffer(copy, &src, &dst, false);
 
-	src.offset = 1;// todo
+	src.offset = idx_list_bci.size;
 
-	dst.buffer = model_buffer,
+	dst.buffer = render.block_models_buffer,
 	dst.offset = 0,
-	dst.size = 1;//todo,
+	dst.size = model_bci.size;
 	SDL_UploadToGPUBuffer(copy, &src, &dst, false);
 
 	SDL_EndGPUCopyPass(copy);
@@ -130,6 +149,8 @@ static int init_models_buffers() {
 
 	SDL_WaitForGPUIdle(render.dev);
 	SDL_ReleaseGPUTransferBuffer(render.dev, transfer_buffer);
+
+	return 0;
 }
 
 static int init_raycast_pipeline(void) {
@@ -145,7 +166,7 @@ static int init_raycast_pipeline(void) {
 	cpi.entrypoint = "main";
 	cpi.format = SDL_GPU_SHADERFORMAT_SPIRV;
 	cpi.num_readonly_storage_textures = 1;
-	cpi.num_readonly_storage_buffers = 1;
+	cpi.num_readonly_storage_buffers = 3;
 	cpi.num_readwrite_storage_textures = 1;
 	cpi.num_uniform_buffers = 1;
 	cpi.threadcount_x = 8;
@@ -321,6 +342,7 @@ int init_render() {
 	}
 
 	upload_gpu_all_map();
+	init_models_buffers();
 
 	return 0;
 }

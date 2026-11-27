@@ -81,6 +81,10 @@ typedef struct {
 	SDL_GPUTransferBuffer *blocks_transfer_buffer;
 	SDL_GPUBuffer *chunks_buffer;
 	SDL_GPUTransferBuffer *chunks_transfer_buffer;
+
+
+	SDL_GPUBuffer *block_idx_buffer;
+	SDL_GPUBuffer *block_models_buffer;
 	
 	GPUTexture_t *atlas;
 	
@@ -163,5 +167,6 @@ extern block_model_t block_models[4096];
 extern uint32_t block_count;
 
 void register_block_model(uint16_t id, float min_x, float min_y, float min_z, float max_x, float max_y, float max_z);
+void init_blocks();
 
 #endif

@@ -6,7 +6,7 @@
 #endif
 
 #define TILE_SIZE 16
-#define EPSILON (0.000001f)
+#define EPSILON (0.00001f)
 #define INF (1e30f)
 
 static const int3 WORLD_SIZE = int3(WORLD_W * 16, WORLD_H * 16, WORLD_W * 16);
@@ -48,6 +48,12 @@ Texture2D<float4> atlas : register(t0, space0);
 
 [[vk::binding(1, 0)]]
 StructuredBuffer<uint> blocks : register(t1, space0);
+
+
+[[vk::binding(2, 0)]]
+StructuredBuffer<uint> block_idx: register(t2, space0);
+[[vk::binding(3, 0)]]
+StructuredBuffer<float> block_models: register(t3, space0);
 
 [[vk::binding(0, 1), vk::image_format("rgba8")]]
 RWTexture2D<float4> outImage : register(u0, space1);
@@ -215,18 +221,21 @@ void flip_up_aabb(inout AABB_t aabb) {
 
 static bool collide(inout ray_t ray, int side, float dist, uint id, int map_x, int map_y, int map_z) {
 	int3 map_co = int3(map_x, map_y, map_z);
-	AABB_t hitbox;
+	uint rots = id >> 12;
+	id &= 4095;
 
-	switch (id) {
-		default:
-			get_full_hit(ray, side, dist, id, map_co);
-			return true;
-		case 5:
-			hitbox.min_co = float4(0, 0, 0, 0);
-			hitbox.max_co = float4(0.5, 0.5, 0.5, 0);
-			flip_up_aabb(hitbox);
-			return get_aabb_hit(ray, side, dist, id, map_co, hitbox);
+	uint model_idx = block_idx[id];
+	if (model_idx == (uint)-1) {
+		get_full_hit(ray, side, dist, id, map_co);
+		return true;
 	}
+	
+	AABB_t hitbox;
+	hitbox.min_co = float4(block_models[model_idx], block_models[model_idx + 1], block_models[model_idx + 2], 0);
+	hitbox.max_co = float4(block_models[model_idx + 3], block_models[model_idx + 4], block_models[model_idx + 5], 0);
+
+	rotate_AABB_Y(hitbox, rots & 3);
+	return get_aabb_hit(ray, side, dist, id, map_co, hitbox);
 }
 
 static void cast_ray(inout ray_t ray, int map_x, int map_y, int map_z) {

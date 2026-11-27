@@ -60,6 +60,10 @@ int render_raycast(SDL_GPUCommandBuffer *cmd, GPUTexture_t *swap) {
 	SDL_BindGPUComputeStorageTextures(pass, 0, &render.atlas->tex, 1);
 	SDL_BindGPUComputeStorageTextures(pass, 1, &render.atlas->tex, 1);
 	SDL_BindGPUComputeStorageBuffers(pass, 0, &render.blocks_buffer, 1);
+
+	SDL_BindGPUComputeStorageBuffers(pass, 1, &render.block_idx_buffer, 1);
+	SDL_BindGPUComputeStorageBuffers(pass, 2, &render.block_models_buffer, 1);
+
 	SDL_DispatchGPUCompute(pass, (render.base_width + 7) / 8, (render.base_height + 7) / 8, 1);
 	SDL_EndGPUComputePass(pass);
 

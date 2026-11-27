@@ -13,3 +13,8 @@ void register_block_model(uint16_t id, float min_x, float min_y, float min_z, fl
 	block_models[id].aabb_max[1] = max_y;
 	block_models[id].aabb_max[2] = max_z;
 }
+
+void init_blocks() {
+	register_block_model(5, 0, 0, 0, 0.5, 1, 1);
+	block_count = 6;
+}
