@@ -23,6 +23,8 @@ void place(int x, int y, int z, uint32_t block) {
 			(*chunk->blocks)[i] = 0;
 	}
 	(*chunk->blocks)[COORD_TO_BLOCK(x, y, z)] = block;
+	clt.world.dirty = 1;
+	chunk->dirty = 1;
 }
 
 void place_tree(int x, int y, int z) {
@@ -104,6 +106,8 @@ int main() {
 			if (ev.type == SDL_EVENT_KEY_DOWN) {
 				if (ev.key.scancode == SDL_SCANCODE_ESCAPE)
 					SDL_SetWindowRelativeMouseMode(render.win, !SDL_GetWindowRelativeMouseMode(render.win));
+				if (ev.key.scancode == SDL_SCANCODE_P)
+					place(render.cam.x, render.cam.y, render.cam.z, 1);
 			}
 			if (ev.type == SDL_EVENT_MOUSE_MOTION) {
 				render.cam.pitch -= ev.motion.yrel * 0.002;
@@ -161,7 +165,7 @@ int main() {
 		if (k[SDL_SCANCODE_LSHIFT]) {
 			render.cam.y -= 0.2;
 		}
-		
+
 		client_update();
 		
 		render_start();

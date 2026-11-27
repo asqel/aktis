@@ -1,6 +1,6 @@
 #include "client.h"
 
-SDL_GPUShader *load_shader(SDL_GPUDevice *gpu, char *shader_file, Uint32 num_samplers, Uint32 num_uniform_buf) {
+SDL_GPUShader *load_shader(SDL_GPUDevice *gpu, char *shader_file, Uint32 num_uniform_buf, Uint32 num_samplers) {
 	SDL_GPUShaderStage stage;
 	if (SDL_strstr(shader_file, ".vert"))
 		stage = SDL_GPU_SHADERSTAGE_VERTEX;
