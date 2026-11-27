@@ -21,11 +21,13 @@ typedef struct {
 } sprite_gpu_t;
 
 int render_raycast(SDL_GPUCommandBuffer *cmd, GPUTexture_t *swap) {
+	update_gpu_map();
+
 	const float fov = 70.f * (float)M_PI / 180.f;
 	const float tanHalf = tanf(fov * 0.5f);
 	const float aspect  = (float)render.base_width / (float)render.base_height;
 
-	camera_gpu_t cam;
+	camera_gpu_t cam = {0};
 	cam.pos[0] = render.cam.x;
 	cam.pos[1] = render.cam.y;
 	cam.pos[2] = render.cam.z;
@@ -56,7 +58,8 @@ int render_raycast(SDL_GPUCommandBuffer *cmd, GPUTexture_t *swap) {
 	SDL_GPUComputePass *pass = SDL_BeginGPUComputePass(cmd, &outBind, 1, NULL, 0);
 	SDL_BindGPUComputePipeline(pass, render.raycast_pipeline);
 	SDL_BindGPUComputeStorageTextures(pass, 0, &render.atlas->tex, 1);
-	SDL_BindGPUComputeStorageBuffers(pass, 0, &render.world_buffer, 1);
+	SDL_BindGPUComputeStorageTextures(pass, 1, &render.atlas->tex, 1);
+	SDL_BindGPUComputeStorageBuffers(pass, 0, &render.blocks_buffer, 1);
 	SDL_DispatchGPUCompute(pass, (render.base_width + 7) / 8, (render.base_height + 7) / 8, 1);
 	SDL_EndGPUComputePass(pass);
 

@@ -2,66 +2,45 @@
 
 renderer_t render = {0};
 
-int upload_gpu_map()
-{
-	const size_t total_chunk = render.render_distance * render.render_distance * render.render_distance;
-	const size_t bytes_per_chunk = (size_t)CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE * sizeof(uint32_t);
-
-	uint8_t *ptr = SDL_MapGPUTransferBuffer(render.dev, render.world_transfer_buffer, true);
-	if (!ptr) {
-		SDL_Log("upload_gpu_map: map: %s", SDL_GetError());
-		SDL_ReleaseGPUTransferBuffer(render.dev, render.world_transfer_buffer);
-		return 0;
-	}
-	for (size_t i = 0; i < total_chunk; i++) {
-		uint8_t *dst = ptr + i * bytes_per_chunk;
-		if (clt.world.chunks[i].blocks)
-			SDL_memcpy(dst, *clt.world.chunks[i].blocks, bytes_per_chunk);
-		else
-			SDL_memset(dst, 0, bytes_per_chunk);
-	}
-	SDL_UnmapGPUTransferBuffer(render.dev, render.world_transfer_buffer);
-
-	SDL_GPUCommandBuffer *cmd  = SDL_AcquireGPUCommandBuffer(render.dev);
-	SDL_GPUCopyPass *copy = SDL_BeginGPUCopyPass(cmd);
-
-	SDL_GPUTransferBufferLocation src;
-	src.transfer_buffer = render.world_transfer_buffer;
-	src.offset = 0;
-
-	SDL_GPUBufferRegion dst = {
-		.buffer = render.world_buffer,
-		.offset = 0,
-		.size = (Uint32)bytes_per_chunk * total_chunk,
-	};
-
-	SDL_UploadToGPUBuffer(copy, &src, &dst, false);
-
-	SDL_EndGPUCopyPass(copy);
-	SDL_SubmitGPUCommandBuffer(cmd);
-
-	SDL_WaitForGPUIdle(render.dev);
-	SDL_ReleaseGPUTransferBuffer(render.dev, render.world_transfer_buffer);
-	return 1;
-}
-
 static int init_gpu_map_buffer(void) {
-	const size_t total_chunk = render.render_distance * render.render_distance * render.render_distance;
-	const size_t bytes_per_chunk = (size_t)CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE * sizeof(uint32_t);
+	const uint32_t total_chunk = render.render_distance * render.render_distance * render.render_distance;
+	const uint32_t bytes_per_chunk = (size_t)CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE * sizeof(uint32_t);
 
-	SDL_GPUBufferCreateInfo bci = {0};
-	bci.usage = SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_READ;
-	bci.size = (uint32_t)(total_chunk * bytes_per_chunk);
-	render.world_buffer = SDL_CreateGPUBuffer(render.dev, &bci);
-	if (!render.world_buffer) {
+	SDL_GPUBufferCreateInfo blocks_bci = {
+		.usage = SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_READ,
+		.size = total_chunk * bytes_per_chunk,
+	};
+	render.blocks_buffer = SDL_CreateGPUBuffer(render.dev, &blocks_bci);
+	if (!render.blocks_buffer) {
 		SDL_Log("SDL_CreateGPUBuffer, error: %s", SDL_GetError());
 		return 0;
 	}
+
+	SDL_GPUBufferCreateInfo chunk_bci = {
+		.usage = SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_READ,
+		.size = sizeof(uint32_t) * total_chunk,
+	};
+	render.chunks_buffer = SDL_CreateGPUBuffer(render.dev, &chunk_bci);
+	if (!render.chunks_buffer) {
+		SDL_Log("SDL_CreateGPUBuffer, error: %s", SDL_GetError());
+		return 0;
+	}
+
+	SDL_GPUTransferBufferCreateInfo blocks_tbci = {
+		.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+		.size = bytes_per_chunk,
+	};
+	render.blocks_transfer_buffer = SDL_CreateGPUTransferBuffer(render.dev, &blocks_tbci);
+	if (!render.blocks_transfer_buffer) {
+		SDL_Log("SDL_CreateGPUTransferBuffer, error: %s", SDL_GetError());
+		return 0;
+	}
+
 	SDL_GPUTransferBufferCreateInfo tbci = {0};
 	tbci.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
-	tbci.size = (uint32_t)(total_chunk * bytes_per_chunk);
-	render.world_transfer_buffer = SDL_CreateGPUTransferBuffer(render.dev, &tbci);
-	if (!render.world_transfer_buffer) {
+	tbci.size = (uint32_t)bytes_per_chunk;
+	render.chunks_transfer_buffer = SDL_CreateGPUTransferBuffer(render.dev, &tbci);
+	if (!render.chunks_transfer_buffer) {
 		SDL_Log("SDL_CreateGPUTransferBuffer, error: %s", SDL_GetError());
 		return 0;
 	}
@@ -82,6 +61,75 @@ static GPUTexture_t *init_gpu_texture_buffer(char *path) {
 	SDL_EndGPUCopyPass(cp);
 	SDL_SubmitGPUCommandBuffer(cmd_buff);
 	return res;
+}
+
+
+static int init_models_buffers() {
+
+	SDL_GPUBufferCreateInfo idx_list_bci = {
+		.usage = SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_READ,
+		.size = sizeof(uint32_t) * 1,
+	};
+	SDL_GPUBuffer *idx_lsit_buffer = SDL_CreateGPUBuffer(render.dev, &idx_list_bci);
+
+	SDL_GPUBufferCreateInfo model_bci = {
+		.usage = SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_READ,
+		.size = sizeof(float) * 6 * 1,
+	};
+	SDL_GPUBuffer *model_buffer = SDL_CreateGPUBuffer(render.dev, &model_bci);
+
+
+	if (!idx_lsit_buffer || !render.chunks_buffer) {
+		SDL_Log("SDL_CreateGPUBuffer, error: %s", SDL_GetError());
+		return 0;
+	}
+
+	SDL_GPUTransferBufferCreateInfo tbci = {
+		.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+		.size = sizeof(uint32_t) * 1 //todo,
+	};
+	SDL_GPUTransferBuffer *transfer_buffer = SDL_CreateGPUTransferBuffer(render.dev, &tbci);
+	if (!render.blocks_buffer) {
+		SDL_Log("SDL_CreateGPUTransferBuffer, error: %s", SDL_GetError());
+		return 0;
+	}
+
+	uint8_t *ptr = SDL_MapGPUTransferBuffer(render.dev, transfer_buffer, true);
+	if (!ptr) {
+		SDL_Log("upload_gpu_map: map: %s", SDL_GetError());
+		SDL_ReleaseGPUTransferBuffer(render.dev, transfer_buffer);
+		return 0;
+	}
+	//memcpy(ptr, idx_lsit_buffer, 1); TODO
+	//memcpy(ptr + autre, model_buffer, 1); TODO
+	SDL_UnmapGPUTransferBuffer(render.dev, transfer_buffer);
+
+	SDL_GPUCommandBuffer *cmd  = SDL_AcquireGPUCommandBuffer(render.dev);
+	SDL_GPUCopyPass *copy = SDL_BeginGPUCopyPass(cmd);
+
+	SDL_GPUTransferBufferLocation src;
+	SDL_GPUBufferRegion dst;
+
+	src.transfer_buffer = transfer_buffer;
+	src.offset = 0;
+
+	dst.buffer = idx_lsit_buffer;
+	dst.offset = 0;
+	dst.size = 1;//todo,
+	SDL_UploadToGPUBuffer(copy, &src, &dst, false);
+
+	src.offset = 1;// todo
+
+	dst.buffer = model_buffer,
+	dst.offset = 0,
+	dst.size = 1;//todo,
+	SDL_UploadToGPUBuffer(copy, &src, &dst, false);
+
+	SDL_EndGPUCopyPass(copy);
+	SDL_SubmitGPUCommandBuffer(cmd);
+
+	SDL_WaitForGPUIdle(render.dev);
+	SDL_ReleaseGPUTransferBuffer(render.dev, transfer_buffer);
 }
 
 static int init_raycast_pipeline(void) {
@@ -108,7 +156,7 @@ static int init_raycast_pipeline(void) {
 	if (!render.raycast_pipeline) {
 		SDL_Log("SDL_CreateGPUComputePipeline, error: %s", SDL_GetError());
 		return 0;
-	} 
+	}
 
 	SDL_GPUTextureCreateInfo tci = {0};
 	tci.type = SDL_GPU_TEXTURETYPE_2D;
@@ -128,8 +176,8 @@ static int init_raycast_pipeline(void) {
 
 int init_image_pipeline(void) {
 
-	SDL_GPUShader *vertex_shader = load_shader(render.dev, "image.vert.spv", 0, 1);
-	SDL_GPUShader *fragment_shader = load_shader(render.dev, "image.frag.spv", 1, 0);
+	SDL_GPUShader *vertex_shader = load_shader(render.dev, "image.vert.spv", 1, 0);
+	SDL_GPUShader *fragment_shader = load_shader(render.dev, "image.frag.spv", 0, 1);
 	if (!vertex_shader || !fragment_shader) {
 		SDL_Log("load_shader, error: %s", SDL_GetError());
 		return 0;
@@ -272,7 +320,7 @@ int init_render() {
 		return 1;
 	}
 
-	upload_gpu_map();
+	upload_gpu_all_map();
 
 	return 0;
 }

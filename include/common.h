@@ -40,6 +40,7 @@ typedef struct {
 	chunk_t *chunks;
 	uint16_t width;
 	uint16_t height;
+	uint8_t dirty;
 } world_t;
 
 enum {

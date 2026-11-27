@@ -77,8 +77,10 @@ typedef struct {
 	
 	SDL_GPUComputePipeline *raycast_pipeline;
 	SDL_GPUTexture *raycast_texture;
-	SDL_GPUBuffer *world_buffer;
-	SDL_GPUTransferBuffer *world_transfer_buffer;
+	SDL_GPUBuffer *blocks_buffer;
+	SDL_GPUTransferBuffer *blocks_transfer_buffer;
+	SDL_GPUBuffer *chunks_buffer;
+	SDL_GPUTransferBuffer *chunks_transfer_buffer;
 	
 	GPUTexture_t *atlas;
 	
@@ -126,9 +128,12 @@ void client_draw();
 void client_update();
 
 SDL_GPUTexture *load_gpu_texture(SDL_GPUDevice *device, SDL_GPUCopyPass *copy_pass, const char *file, int *width, int *height);
-SDL_GPUShader *load_shader(SDL_GPUDevice *gpu, char *shader_file, Uint32 num_uniform_buf, Uint32 num_samplers);
+SDL_GPUShader *load_shader(SDL_GPUDevice *gpu, char *shader_file, Uint32 num_samplers, Uint32 num_uniform_buf);
 int init_render();
 int render_draw(void);
+
+int upload_gpu_all_map();
+int update_gpu_map();
 
 //void render_compute();
 //int render_set_threads(size_t number);
