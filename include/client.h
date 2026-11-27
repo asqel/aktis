@@ -125,8 +125,6 @@ void render_texture(GPUTexture_t *texture, SDL_FRect *src, SDL_FRect *dest, uint
 void client_draw();
 void client_update();
 
-
-
 SDL_GPUTexture *load_gpu_texture(SDL_GPUDevice *device, SDL_GPUCopyPass *copy_pass, const char *file, int *width, int *height);
 SDL_GPUShader *load_shader(SDL_GPUDevice *gpu, char *shader_file, Uint32 num_uniform_buf, Uint32 num_samplers);
 int init_render();
@@ -150,13 +148,15 @@ void clt_on_key(SDL_Event *ev);
 void client_fail(const char *msg);
 void client_draw_fail();
 
-enum {
-	DIR_NORTH,
-	DIR_EAST,
-	DIR_SOUTH,
-	DIR_WEST,
-	DIR_TOP,
-	DIR_BOTTOM,
-};
+typedef struct {
+	uint8_t is_special;
+	float aabb_min[3];
+	float aabb_max[3];
+} block_model_t;
+
+extern block_model_t block_models[4096];
+extern uint32_t block_count;
+
+void register_block_model(uint16_t id, float min_x, float min_y, float min_z, float max_x, float max_y, float max_z);
 
 #endif

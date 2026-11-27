@@ -276,3 +276,4 @@ int init_render() {
 
 	return 0;
 }
+

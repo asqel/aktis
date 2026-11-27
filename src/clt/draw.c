@@ -27,7 +27,8 @@ void draw_start() {
 void client_draw() {
 	switch (clt.state) {
 		case CLT_START:
-			draw_start();
+			//draw_start();
+			render_raycast(render.gpu_cmd, &render.swap);
 			break;
 		case CLT_LOADING:
 			draw_loading();
